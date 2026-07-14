@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Runner</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: #0d0f16;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace;
+    overflow: hidden;
+  }
+  #wrap { position: relative; }
+  canvas { display: block; background: linear-gradient(#12141c, #0d0f16); border-radius: 10px; }
+  #hud {
+    position: absolute; top: 14px; left: 18px; color: #4fc9c0;
+    font-size: 14px; letter-spacing: 1px; text-shadow: 0 0 8px rgba(79,201,192,0.6);
+  }
+  #msg {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; color: #eef0f6; text-align: center;
+    background: rgba(13,15,22,0.55); gap: 10px;
+  }
+  #msg span { color: #8a93ad; font-size: 12px; }
+  #msg b { font-size: 20px; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c" width="600" height="340"></canvas>
+  <div id="hud">SCORE 0</div>
+  <div id="msg"><b>NEON RUNNER</b><span>Tryck MELLANSLAG eller tryck på skärmen för att hoppa</span></div>
+</div>
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+const hud = document.getElementById("hud");
+const msg = document.getElementById("msg");
+
+let running = false;
+let score = 0;
+let best = parseInt(localStorage.getItem("neonRunnerBest") || "0", 10);
+hud.textContent = "SCORE 0   BEST " + best;
+msg.innerHTML = `<b>NEON RUNNER</b><span>Highscore: ${best}</span><span>Tryck MELLANSLAG eller tryck på skärmen för att hoppa</span>`;
+let speed = 4.8;
+let frame = 0;
+let nextSpawnIn = 0;
+
+const ground = 280;
+const player = { x: 70, y: ground - 34, w: 26, h: 34, vy: 0, jumping: false };
+let obstacles = [];
+
+// Minimum & maximum frames between obstacles at the current speed.
+// A wider range = more variation (sometimes tight, sometimes a long breather).
+function spawnRange() {
+  const base = Math.max(34, 66 - Math.floor(speed * 2.2));
+  return { min: base, max: base + 40 };
+}
+
+function scheduleNextSpawn() {
+  const { min, max } = spawnRange();
+  nextSpawnIn = min + Math.floor(Math.random() * (max - min));
+}
+
+function reset() {
+  score = 0;
+  speed = 4.8;
+  frame = 0;
+  obstacles = [];
+  player.y = ground - player.h;
+  player.vy = 0;
+  player.jumping = false;
+  running = true;
+  msg.style.display = "none";
+  scheduleNextSpawn();
+}
+
+function jump() {
+  if (!running) { reset(); return; }
+  if (!player.jumping) {
+    player.vy = -11.5;
+    player.jumping = true;
+  }
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space") { e.preventDefault(); jump(); }
+});
+canvas.addEventListener("pointerdown", jump);
+
+function spawnObstacle() {
+  const h = 20 + Math.random() * 26;
+  const w = 14 + Math.random() * 10;
+  obstacles.push({ x: canvas.width + 20, y: ground - h, w, h });
+  scheduleNextSpawn();
+}
+
+function loop() {
+  requestAnimationFrame(loop);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = "#2e3548";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, ground);
+  ctx.lineTo(canvas.width, ground);
+  ctx.stroke();
+
+  if (!running) {
+    drawPlayer();
+    return;
+  }
+
+  frame++;
+  nextSpawnIn--;
+  if (nextSpawnIn <= 0) spawnObstacle();
+
+  player.vy += 0.65;
+  player.y += player.vy;
+  if (player.y > ground - player.h) {
+    player.y = ground - player.h;
+    player.vy = 0;
+    player.jumping = false;
+  }
+
+  ctx.fillStyle = "#e8b84b";
+  for (const o of obstacles) {
+    o.x -= speed;
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+  }
+  obstacles = obstacles.filter(o => o.x + o.w > 0);
+
+  const pad = 4;
+  for (const o of obstacles) {
+    if (player.x + pad < o.x + o.w && player.x + player.w - pad > o.x &&
+        player.y + pad < o.y + o.h && player.y + player.h - pad > o.y) {
+      running = false;
+      const finalScore = Math.floor(score);
+      const isNewBest = finalScore > best;
+      if (isNewBest) {
+        best = finalScore;
+        localStorage.setItem("neonRunnerBest", String(best));
+      }
+      msg.style.display = "flex";
+      msg.innerHTML = `<b>GAME OVER</b><span>Poäng: ${finalScore} — Highscore: ${best}${isNewBest ? " (nytt rekord!)" : ""}</span><span>tryck för att köra igen</span>`;
+    }
+  }
+
+  score += speed * 0.05;
+  speed = Math.min(speed + 0.001, 9);
+  hud.textContent = "SCORE " + Math.floor(score) + "   BEST " + best;
+
+  drawPlayer();
+}
+
+function drawPlayer() {
+  ctx.fillStyle = "#4fc9c0";
+  ctx.shadowColor = "#4fc9c0";
+  ctx.shadowBlur = 14;
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+  ctx.shadowBlur = 0;
+}
+
+loop();
+</script>
+<script src="i18n-data.js"></script>
+<script src="../../i18n.js"></script>
+</body>
+</html>
