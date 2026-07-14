@@ -70,36 +70,23 @@
   function start() {
     translateAll();
 
+    // Only watch for added/removed nodes. Games in this portal update text
+    // via .textContent / .innerHTML, both of which replace child nodes and
+    // therefore already show up as childList mutations — so we don't need
+    // to also watch characterData or attributes, which on an animated game
+    // (elements moving every frame) can fire constantly and bog the page
+    // down. Keeping this narrow keeps translation reliable without the lag.
     const observer = new MutationObserver((mutations) => {
-      for (const m of mutations) {
-        m.addedNodes && m.addedNodes.forEach(walk);
-        if (m.type === "characterData" && m.target) {
-          const val = m.target.nodeValue;
-          if (val) {
-            const translated = translate(val);
-            if (translated !== val) m.target.nodeValue = translated;
-          }
+      try {
+        for (const m of mutations) {
+          m.addedNodes && m.addedNodes.forEach(walk);
         }
-        if (m.type === "attributes" && m.target && ATTRS.includes(m.attributeName)) {
-          const v = m.target.getAttribute(m.attributeName);
-          if (v) {
-            const tv = translate(v);
-            if (tv !== v) m.target.setAttribute(m.attributeName, tv);
-          }
-        }
+      } catch (err) {
+        // Never let a translation issue take the game down with it.
+        console.warn("i18n translation skipped:", err);
       }
     });
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ATTRS
-    });
-
-    // Safety-net sweep for anything a mutation event might have missed
-    // (cheap: only runs while the game tab is open, dictionary is small).
-    setInterval(translateAll, 1200);
+    observer.observe(document.body, { childList: true, subtree: true });
   }
 
   if (document.readyState === "loading") {
