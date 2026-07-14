@@ -7,7 +7,7 @@
 // nothing — the portal works exactly the same either way.
 // ============================================================
 
-const WORKER_URL = "shelf.fabian-hallberg09.workers.dev"; // <-- set after deploying the Worker
+const WORKER_URL = "https://shelf.fabian-hallberg09.workers.dev"; // <-- set after deploying the Worker
 
 (function () {
   const NICK_KEY = "shelf.nickname";
