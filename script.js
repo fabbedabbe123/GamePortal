@@ -28,7 +28,11 @@
     play: { sv: "Spela", en: "Play" },
     back: { sv: "Tillbaka", en: "Back" },
     empty: { sv: "Inga spel matchar. Testa ett annat filter eller sök.", en: "No games match. Try another filter or search." },
-    fullscreenTitle: { sv: "Fullskärm", en: "Fullscreen" }
+    fullscreenTitle: { sv: "Fullskärm", en: "Fullscreen" },
+    addGame: { sv: "Lägg till spel", en: "Add game" },
+    modalTitle: { sv: "Lägg till spel", en: "Add game" },
+    ghSave: { sv: "Spara & fortsätt", en: "Save & continue" },
+    gameSubmit: { sv: "Ladda upp & publicera", en: "Upload & publish" }
   };
   function t(key) { return STRINGS[key][lang] || STRINGS[key].sv; }
 
@@ -207,6 +211,13 @@
     document.getElementById("back-btn-label").textContent = t("back");
     document.getElementById("fullscreen-btn").title = t("fullscreenTitle");
     searchInput.placeholder = t("searchPlaceholder");
+    document.getElementById("add-game-label").textContent = t("addGame");
+    const adminTitleEl = document.getElementById("admin-title");
+    if (adminTitleEl) adminTitleEl.textContent = t("modalTitle");
+    const ghSaveEl = document.getElementById("gh-save");
+    if (ghSaveEl) ghSaveEl.textContent = t("ghSave");
+    const gameSubmitEl = document.getElementById("game-submit");
+    if (gameSubmitEl) gameSubmitEl.textContent = t("gameSubmit");
 
     langButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.lang === lang));
 
@@ -229,4 +240,6 @@
   });
 
   applyLanguage();
+
+  window.ShelfPortal = { refresh: render };
 })();

@@ -20,7 +20,48 @@ game-portal/
     └── gilded-fox/           index.html   (redan bara engelska, ingen ordlista behövs)
 ```
 
-## Lägg till ett eget spel
+## Lägg till spel via sidan (utan att röra GitHub manuellt)
+
+Portalen har en **"+ Lägg till spel"**-knapp uppe till höger. Första gången
+kopplar du den till ditt GitHub-repo — sedan laddar du bara upp en HTML-fil,
+fyller i titel/kategori/beskrivning, och portalen committar filen och
+registrerar spelet i `games.js` **direkt i ditt repo**. GitHub Pages bygger
+om sig automatiskt (oftast under en minut), och sen syns spelet för alla som
+besöker sidan — inget manuellt uppladdande via GitHubs webbgränssnitt behövs.
+
+Detta kräver internet (det pratar med GitHub:s API), och funkar bara på
+sidan när den faktiskt ligger på GitHub Pages med ett riktigt repo — inte när
+du bara öppnar filen lokalt utan att ha pushat något än.
+
+### Skapa en GitHub-token (gör en gång)
+
+1. Gå till **github.com → din profilbild → Settings**
+2. Scrolla ner till **Developer settings** (längst ner i vänstermenyn)
+3. **Personal access tokens → Fine-grained tokens → Generate new token**
+4. Under **Repository access**, välj **Only select repositories** och peka ut
+   ditt `game-portal`-repo (inte alla dina repon)
+5. Under **Permissions → Repository permissions**, hitta **Contents** och
+   sätt den till **Read and write**
+6. Generera token och kopiera den — den visas bara en gång
+
+### Använda den i portalen
+
+1. Klicka **+ Lägg till spel**
+2. Skriv in repot som `dittanvändarnamn/game-portal`
+3. Klistra in token, klicka **Spara & fortsätt**
+4. Fyll i titel, kategori, beskrivning, en accentfärg och välj din spelfil
+   (en enda `.html`-fil — spel med flera filer måste fortfarande läggas till
+   manuellt enligt sektionen ovan)
+5. Klicka **Ladda upp & publicera**
+
+**Säkerhet:** token sparas bara i din egen webbläsares `localStorage` — den
+skickas aldrig någon annanstans än till `api.github.com`, och skrivs aldrig in
+i någon fil som committas. Dela den ändå aldrig med någon, och använd den
+bara på enheter du själv litar på. Vill du koppla bort, finns en
+"Koppla från GitHub"-knapp i panelen. Dina kompisar behöver ingen token —
+de bara spelar via länken som vanligt.
+
+## Lägg till ett eget spel manuellt
 
 1. Skapa en ny mapp i `games/`, t.ex. `games/mitt-spel/`
 2. Lägg din spelfil där och döp den till **index.html**

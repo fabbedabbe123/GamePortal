@@ -29,6 +29,7 @@
       <button data-lang="sv" id="lang-sv">SV</button>
       <button data-lang="en" id="lang-en">EN</button>
     </div>
+    <button class="add-game-btn" id="add-game-btn">+ <span id="add-game-label">Lägg till spel</span></button>
   </div>
 
   <div class="controls">
@@ -61,7 +62,62 @@
   <iframe id="game-frame" src="" allow="fullscreen; gamepad; autoplay"></iframe>
 </div>
 
+<div class="modal-overlay" id="admin-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="admin-title">Lägg till spel</h2>
+      <button class="icon-btn" id="admin-close">✕</button>
+    </div>
+
+    <div class="modal-body" id="admin-connect-step">
+      <p class="modal-hint">
+        Det här kopplar portalen till ditt GitHub-repo, så att spel du laddar upp
+        här läggs till direkt i repot och dyker upp för alla som besöker sidan
+        (efter att GitHub Pages byggt om, oftast under en minut).
+      </p>
+      <p class="modal-hint modal-warn">
+        Token sparas bara lokalt i den här webbläsaren. Dela den aldrig med
+        någon. Skapa helst en "fine-grained" token med behörighet begränsad
+        till bara det här repot (Contents: Read and write) — se README för
+        instruktioner.
+      </p>
+      <label>GitHub repo <span class="label-hint">(t.ex. dittnamn/game-portal)</span></label>
+      <input type="text" id="gh-repo" placeholder="dittnamn/game-portal">
+      <label>Personal Access Token</label>
+      <input type="password" id="gh-token" placeholder="ghp_...">
+      <button class="modal-btn primary" id="gh-save">Spara & fortsätt</button>
+      <div class="admin-status" id="connect-status"></div>
+    </div>
+
+    <div class="modal-body" id="admin-form-step" style="display:none">
+      <label>Titel</label>
+      <input type="text" id="game-title" placeholder="Mitt Spel">
+
+      <label>Kategori</label>
+      <input type="text" id="game-category" list="cat-list" placeholder="Arcade, Puzzle, Sport...">
+      <datalist id="cat-list"></datalist>
+
+      <label>Beskrivning (svenska)</label>
+      <textarea id="game-desc-sv" rows="2" placeholder="Kort beskrivning som visas på kortet"></textarea>
+
+      <label>Description <span class="label-hint">(engelska, valfritt)</span></label>
+      <textarea id="game-desc-en" rows="2" placeholder="Leave blank to reuse the Swedish text"></textarea>
+
+      <label>Accentfärg</label>
+      <input type="color" id="game-color" value="#4fc9c0">
+
+      <label>Spelfil <span class="label-hint">(en enda .html-fil)</span></label>
+      <input type="file" id="game-file" accept=".html">
+
+      <button class="modal-btn primary" id="game-submit">Ladda upp & publicera</button>
+      <button class="modal-btn ghost" id="gh-disconnect">Koppla från GitHub</button>
+      <div class="admin-status" id="submit-status"></div>
+    </div>
+  </div>
+</div>
+
 <script src="games.js"></script>
 <script src="script.js"></script>
+<script src="games-admin.js"></script>
 </body>
 </html>
