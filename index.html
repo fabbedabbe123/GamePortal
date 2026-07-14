@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHELF — Din spelportal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">SH</div>
+      <div class="brand-text">
+        <h1>Shelf</h1>
+        <span id="game-count-label">— din egna spelportal</span>
+      </div>
+    </div>
+    <div class="stats">
+      <div><b id="stat-total">0</b><span id="stat-total-label">spel</span></div>
+      <div><b id="stat-fav">0</b><span id="stat-fav-label">favoriter</span></div>
+      <div><b id="stat-cat">0</b><span id="stat-cat-label">kategorier</span></div>
+    </div>
+    <div class="lang-toggle" id="lang-toggle">
+      <button data-lang="sv" id="lang-sv">SV</button>
+      <button data-lang="en" id="lang-en">EN</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" id="search" placeholder="Sök bland dina spel...">
+    </div>
+    <div class="pill-row" id="category-pills"></div>
+    <div class="pill fav-pill" id="fav-toggle">★ <span id="fav-toggle-label">Favoriter</span></div>
+  </div>
+
+  <div class="section-label" id="section-label">Ditt bibliotek</div>
+  <div class="grid" id="grid"></div>
+
+</div>
+
+<div class="player" id="player">
+  <div class="player-bar">
+    <div class="left">
+      <button class="back-btn" id="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        <span id="back-btn-label">Tillbaka</span>
+      </button>
+      <span class="player-title" id="player-title"></span>
+    </div>
+    <button class="icon-btn" id="fullscreen-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+    </button>
+  </div>
+  <iframe id="game-frame" src="" allow="fullscreen; gamepad; autoplay"></iframe>
+</div>
+
+<script src="games.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
