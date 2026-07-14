@@ -93,7 +93,7 @@
 
   document.addEventListener("keydown", (e) => {
     const key = e.key.toLowerCase();
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === "a") {
+    if ((e.ctrlkey || e.metaKey) && e.shiftKey && e.altKey && key === "c") {
       e.preventDefault();
       openBtn.style.display = "inline-block";
       open();
