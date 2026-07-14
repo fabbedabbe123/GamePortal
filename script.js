@@ -17,7 +17,7 @@
 
   // ---------- Portal chrome translations ----------
   const STRINGS = {
-    tagline: { sv: "— din egna spelportal", en: "— your own game portal" },
+    tagline: { sv: "- Designad av Fabbe", en: "- Designed by Fabbe" },
     total: { sv: "spel", en: "games" },
     fav: { sv: "favoriter", en: "favorites" },
     cat: { sv: "kategorier", en: "categories" },
