@@ -1,14 +1,6 @@
 // ============================================================
 // GAME REGISTRY
-// Add a new game by copying an entry below and changing the values.
-// "folder" must match a folder name inside /games/ that contains
-// an index.html for that game.
-//
-// "thumb" is raw SVG markup used as cover art on the game row.
-// "description" / "descriptionEn" let the card text switch language
-// along with the portal. If a game doesn't support the built-in
-// translation system, descriptionEn is still shown when English
-// is selected — only the description text, not the game itself.
+// Managed via the portal's admin panel (Hantera spel) and by hand.
 // ============================================================
 
 const GAMES = [
@@ -311,6 +303,7 @@ const GAMES = [
         <rect x="232" y="80" width="36" height="36" rx="4" fill="#3a3a3c" stroke="#565758" stroke-width="2"/>
         <text x="250" y="105" font-family="sans-serif" font-weight="700" font-size="18" fill="#eef0f6" text-anchor="middle">T</text>
       </svg>
-    `
+    `,
+    disabled: true
   }
 ];
