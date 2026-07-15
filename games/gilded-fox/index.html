@@ -1,0 +1,3215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Gilded Fox — Members' Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --felt-deep: #0b3d2e;
+    --felt-dark: #082b21;
+    --ink: #0e1210;
+    --brass: #c9a24b;
+    --brass-bright: #e6c876;
+    --cream: #efe7d8;
+    --cream-dim: #b9b2a2;
+    --loss: #9a3b3b;
+    --win: #3e8e7e;
+    --line: rgba(201,162,75,0.25);
+
+    /* ---- User-adjustable theme (background+text theme, and table color,
+       are intentionally separate variable groups so they can be changed
+       independently from the settings panel) ---- */
+    --bg-color: #0e1210;
+    --text-color: #efe7d8;
+    --text-dim: color-mix(in srgb, var(--text-color) 68%, transparent);
+    --table-color: #12261f;
+    --table-color-dark: color-mix(in srgb, var(--table-color) 65%, black);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at top, color-mix(in srgb, var(--bg-color) 78%, white 22%) 0%, var(--bg-color) 65%);
+    color:var(--text-color);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* subtle felt texture */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .marquee{
+    position:relative; z-index:1;
+    text-align:center;
+    padding:34px 20px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .marquee .emblem{
+    font-family:'Fraunces', serif;
+    font-size:13px;
+    letter-spacing:0.35em;
+    color:var(--brass);
+    text-transform:uppercase;
+    cursor:pointer;
+    user-select:none;
+    display:inline-block;
+    padding:6px 18px;
+    border:1px solid var(--line);
+    border-radius:100px;
+  }
+  h1.title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-style:italic;
+    font-size:clamp(34px, 6vw, 58px);
+    margin:16px 0 4px;
+    letter-spacing:0.01em;
+    color:var(--brass-bright);
+    text-shadow:0 0 30px rgba(230,200,118,0.25);
+  }
+  .sub{
+    color:var(--text-dim);
+    font-size:13px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+  }
+
+  .ledger{
+    position:relative; z-index:1;
+    max-width:420px;
+    margin:26px auto 0;
+    padding:18px 26px;
+    background:linear-gradient(160deg, var(--table-color), var(--table-color-dark));
+    border:1px solid var(--line);
+    border-radius:14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 20px 40px rgba(0,0,0,0.4);
+  }
+  .ledger .label{
+    font-size:11px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin-bottom:4px;
+  }
+  .ledger .amount{
+    font-family:'Space Mono', monospace;
+    font-size:30px;
+    color:var(--brass-bright);
+    font-variant-numeric: tabular-nums;
+  }
+  .ledger .multiplier{
+    text-align:right;
+    font-size:12px;
+    color:var(--win);
+    font-family:'Space Mono', monospace;
+  }
+
+  nav.tabs{
+    position:relative; z-index:1;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:8px;
+    margin:30px auto 0;
+    max-width:640px;
+    padding:0 20px;
+  }
+  nav.tabs button{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:16px;
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:10px 26px;
+    border-radius:100px;
+    cursor:pointer;
+    transition:all .25s ease;
+  }
+  nav.tabs button.active{
+    background:var(--brass);
+    color:var(--ink);
+    border-color:var(--brass);
+    font-weight:600;
+  }
+  nav.tabs button:hover:not(.active){
+    border-color:var(--brass);
+    color:var(--brass-bright);
+  }
+
+  main{
+    position:relative; z-index:1;
+    max-width:680px;
+    margin:36px auto 80px;
+    padding:0 20px;
+  }
+  .room{ display:none; }
+  .room.active{ display:block; animation:fadeIn .4s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ---------- ROULETTE ---------- */
+  .wheel-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:22px;
+  }
+  .wheel-frame{
+    position:relative;
+    width:260px; height:260px;
+  }
+  .wheel{
+    width:100%; height:100%;
+    border-radius:50%;
+    border:6px solid var(--brass);
+    box-shadow:0 0 0 2px var(--ink), 0 20px 50px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.5);
+    transition: transform 4.2s cubic-bezier(.12,.7,.1,1);
+    position:relative;
+  }
+  .wheel-number{
+    position:absolute;
+    top:50%; left:50%;
+    width:20px; height:20px;
+    margin:-10px 0 0 -10px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Mono', monospace;
+    font-size:10px;
+    font-weight:700;
+    color:var(--text-color);
+    text-shadow:0 1px 2px rgba(0,0,0,0.6);
+  }
+  .wheel-frame::after{
+    content:"";
+    position:absolute; top:-14px; left:50%;
+    transform:translateX(-50%);
+    border-left:10px solid transparent;
+    border-right:10px solid transparent;
+    border-top:18px solid var(--brass-bright);
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  }
+  .wheel-center{
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    width:70px; height:70px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #e6c876, #8a6a24);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif; font-style:italic; font-weight:600;
+    color:var(--ink); font-size:22px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.5);
+  }
+
+  .bet-row{
+    display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+  }
+  .bet-chip{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:10px 18px;
+    border-radius:100px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,0.03);
+    color:var(--text-color);
+    cursor:pointer;
+    transition:all .2s ease;
+  }
+  .bet-chip[data-color="red"]{border-color:rgba(154,59,59,0.6);}
+  .bet-chip[data-color="black"]{border-color:rgba(255,255,255,0.2);}
+  .bet-chip[data-color="green"]{border-color:rgba(62,142,126,0.6);}
+  .bet-chip[data-color="even"]{border-color:rgba(201,162,75,0.5);}
+  .bet-chip[data-color="odd"]{border-color:rgba(201,162,75,0.5);}
+  .bet-chip.selected{
+    background:var(--brass); color:var(--ink); border-color:var(--brass);
+  }
+
+  .stake-row{
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    margin-top:6px;
+  }
+  .number-pick{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    margin-top:4px;
+  }
+  .number-pick label{
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+  }
+  .number-pick input{
+    width:70px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--line);
+    color:var(--brass-bright);
+    font-family:'Space Mono', monospace;
+    font-size:16px;
+    padding:8px 10px;
+    border-radius:8px;
+    text-align:center;
+  }
+  .stake-row input{
+    width:120px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--line);
+    color:var(--brass-bright);
+    font-family:'Space Mono', monospace;
+    font-size:16px;
+    padding:10px 12px;
+    border-radius:8px;
+    text-align:center;
+  }
+  .spin-btn, .pull-btn{
+    font-family:'Fraunces',serif; font-style:italic; font-weight:600;
+    font-size:18px;
+    background:linear-gradient(160deg, var(--brass-bright), var(--brass));
+    color:var(--ink);
+    border:none;
+    padding:14px 38px;
+    border-radius:100px;
+    cursor:pointer;
+    box-shadow:0 10px 24px rgba(201,162,75,0.25);
+    transition:transform .15s ease;
+  }
+  .spin-btn:hover, .pull-btn:hover{ transform:translateY(-2px); }
+  .spin-btn:disabled, .pull-btn:disabled{ opacity:0.5; cursor:not-allowed; transform:none;}
+
+  .result-line{
+    text-align:center;
+    min-height:26px;
+    font-family:'Space Mono', monospace;
+    font-size:14px;
+    color:var(--text-dim);
+    margin-top:4px;
+  }
+  .result-line.win{ color:var(--win); }
+  .result-line.loss{ color:var(--loss); }
+
+  /* ---------- SLOTS ---------- */
+  .slot-machine{
+    display:flex; flex-direction:column; align-items:center; gap:22px;
+  }
+  .reels{
+    display:flex; gap:12px;
+    background:linear-gradient(160deg, var(--table-color), var(--table-color-dark));
+    border:2px solid var(--brass);
+    border-radius:16px;
+    padding:20px;
+    box-shadow:inset 0 0 30px rgba(0,0,0,0.6), 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .reel{
+    width:78px; height:90px;
+    background:var(--ink);
+    border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:42px;
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .reel.spinning{ animation: reelSpin 0.12s linear infinite; }
+  @keyframes reelSpin{
+    0%{ transform:translateY(0); }
+    100%{ transform:translateY(6px); }
+  }
+
+  .paytable{
+    font-size:12px;
+    color:var(--text-dim);
+    text-align:center;
+    line-height:1.7;
+  }
+  .paytable b{ color:var(--brass-bright); }
+
+  /* ---------- BLACKJACK ---------- */
+  .blackjack-table{
+    display:flex; flex-direction:column; gap:22px;
+    background:linear-gradient(160deg, var(--table-color), var(--table-color-dark));
+    border:2px solid var(--brass);
+    border-radius:16px;
+    padding:24px 20px;
+    box-shadow:inset 0 0 30px rgba(0,0,0,0.6), 0 20px 50px rgba(0,0,0,0.5);
+    margin-bottom:22px;
+  }
+  .hand-block{ text-align:center; }
+  .hand-label{
+    font-size:11px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin-bottom:10px;
+  }
+  .card-row{
+    display:flex; gap:8px; justify-content:center; flex-wrap:wrap;
+    min-height:78px;
+  }
+  .card{
+    width:52px; height:74px;
+    background:var(--cream);
+    color:var(--ink);
+    border-radius:8px;
+    position:relative;
+    font-family:'Space Mono', monospace;
+    font-weight:700;
+    box-shadow:0 6px 14px rgba(0,0,0,0.4);
+    animation:cardDeal .3s ease;
+  }
+  .card-corner{
+    position:absolute;
+    font-size:11px;
+    line-height:1.1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .card-corner.top{ top:5px; left:6px; }
+  .card-corner.bottom{ bottom:5px; right:6px; transform:rotate(180deg); }
+  .card-center{
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    font-size:24px;
+  }
+  .card.red-suit{ color:var(--loss); }
+  .card.face-down{
+    background:repeating-linear-gradient(45deg, var(--table-color), var(--table-color) 6px, var(--brass) 6px, var(--brass) 7px);
+    border:1px solid var(--brass);
+  }
+  @keyframes cardDeal{
+    from{ opacity:0; transform:translateY(-10px) scale(0.9); }
+    to{ opacity:1; transform:translateY(0) scale(1); }
+  }
+  .hand-total{
+    margin-top:8px;
+    font-family:'Space Mono', monospace;
+    color:var(--brass-bright);
+    font-size:14px;
+  }
+  .deal-btn{
+    font-family:'Fraunces',serif; font-style:italic; font-weight:600;
+    font-size:18px;
+    background:linear-gradient(160deg, var(--brass-bright), var(--brass));
+    color:var(--ink);
+    border:none;
+    padding:14px 38px;
+    border-radius:100px;
+    cursor:pointer;
+    box-shadow:0 10px 24px rgba(201,162,75,0.25);
+    transition:transform .15s ease;
+  }
+  .deal-btn:hover{ transform:translateY(-2px); }
+  .deal-btn:disabled{ opacity:0.5; cursor:not-allowed; transform:none; }
+
+  .player-hands-row{
+    display:flex; gap:18px; justify-content:center; flex-wrap:wrap;
+  }
+  .hand-block.split-hand{
+    padding:10px 14px;
+    border-radius:12px;
+    border:2px solid transparent;
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .hand-block.split-hand.active{
+    border-color:var(--brass-bright);
+    background:rgba(201,162,75,0.08);
+  }
+  .hand-block.split-hand.finished{ opacity:0.55; }
+  .hand-result-tag{
+    font-size:11px;
+    margin-top:4px;
+    font-family:'Space Mono', monospace;
+  }
+  .hand-result-tag.win{ color:var(--win); }
+  .hand-result-tag.loss{ color:var(--loss); }
+
+  .insurance-row{
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    flex-wrap:wrap;
+    margin-top:14px;
+    font-size:13px;
+    color:var(--text-dim);
+  }
+
+  /* ---------- DICE ---------- */
+  .dice-tray{
+    display:flex; gap:20px; justify-content:center;
+    background:linear-gradient(160deg, var(--table-color), var(--table-color-dark));
+    border:2px solid var(--brass);
+    border-radius:16px;
+    padding:30px;
+    box-shadow:inset 0 0 30px rgba(0,0,0,0.6), 0 20px 50px rgba(0,0,0,0.5);
+    margin-bottom:22px;
+  }
+  .die{
+    width:64px; height:64px;
+    background:var(--cream);
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:34px;
+    color:var(--ink);
+    box-shadow:0 6px 14px rgba(0,0,0,0.4);
+    animation:cardDeal .3s ease;
+  }
+  .dice-total{
+    text-align:center;
+    font-family:'Space Mono', monospace;
+    color:var(--brass-bright);
+    font-size:14px;
+    margin-top:-6px;
+  }
+
+  /* ---------- HI-LO ---------- */
+  .hilo-table{
+    display:flex; flex-direction:column; align-items:center; gap:16px;
+    background:linear-gradient(160deg, var(--table-color), var(--table-color-dark));
+    border:2px solid var(--brass);
+    border-radius:16px;
+    padding:26px 20px;
+    box-shadow:inset 0 0 30px rgba(0,0,0,0.6), 0 20px 50px rgba(0,0,0,0.5);
+    margin-bottom:22px;
+  }
+  .hilo-streak{
+    font-family:'Space Mono', monospace;
+    font-size:13px;
+    color:var(--win);
+  }
+  .hilo-multiplier{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:22px;
+    color:var(--brass-bright);
+  }
+  .cashout-btn{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    background:transparent;
+    border:1px solid var(--win);
+    color:var(--win);
+    padding:10px 20px;
+    border-radius:100px;
+    cursor:pointer;
+  }
+  .cashout-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+
+  /* ---------- PLINKO ---------- */
+  .plinko-board{
+    position:relative;
+    width:320px; height:300px;
+    margin:0 auto 20px;
+    background:linear-gradient(160deg, var(--table-color), var(--table-color-dark));
+    border:2px solid var(--brass);
+    border-radius:16px;
+    box-shadow:inset 0 0 30px rgba(0,0,0,0.6), 0 20px 50px rgba(0,0,0,0.5);
+    overflow:hidden;
+  }
+  .plinko-peg{
+    position:absolute;
+    width:6px; height:6px;
+    border-radius:50%;
+    background:var(--brass-bright);
+    box-shadow:0 0 5px rgba(230,200,118,0.7);
+    transform:translate(-50%,-50%);
+  }
+  .plinko-ball{
+    position:absolute;
+    width:14px; height:14px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #ffffff, var(--brass));
+    box-shadow:0 2px 8px rgba(0,0,0,0.6);
+    transform:translate(-50%,-50%);
+    transition: left 0.16s ease-in, top 0.16s ease-in;
+    z-index:5;
+  }
+  .plinko-slots{
+    position:absolute;
+    bottom:0; left:0; right:0;
+    height:34px;
+    display:flex;
+  }
+  .plinko-slot{
+    flex:1;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Mono', monospace;
+    font-size:10px;
+    font-weight:700;
+    color:var(--text-dim);
+    background:rgba(255,255,255,0.03);
+    border-top:1px solid var(--line);
+    border-right:1px solid rgba(255,255,255,0.03);
+    transition: background .3s ease, color .3s ease;
+  }
+  .plinko-slot.hit{
+    background:var(--brass);
+    color:var(--ink);
+  }
+
+  /* ---------- STATS & ACHIEVEMENTS ---------- */
+  .stats-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:24px;
+  }
+  .stat-card{
+    background:linear-gradient(160deg, var(--table-color), var(--table-color-dark));
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px;
+    text-align:center;
+  }
+  .stat-card .stat-label{
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin-bottom:6px;
+  }
+  .stat-card .stat-value{
+    font-family:'Space Mono', monospace;
+    font-size:20px;
+    color:var(--brass-bright);
+  }
+  .achievements-title{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    color:var(--brass-bright);
+    font-size:16px;
+    margin:0 0 12px;
+    text-align:center;
+  }
+  .achievement{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    margin-bottom:8px;
+    opacity:0.4;
+  }
+  .achievement.unlocked{
+    opacity:1;
+    border-color:rgba(62,142,126,0.5);
+    background:rgba(62,142,126,0.06);
+  }
+  .achievement .badge{
+    font-size:20px;
+    width:32px; text-align:center;
+  }
+  .achievement .ach-name{
+    font-weight:600;
+    font-size:13px;
+  }
+  .achievement .ach-desc{
+    font-size:11px;
+    color:var(--text-dim);
+  }
+
+  /* ---------- CONFETTI ---------- */
+  .confetti-layer{
+    position:fixed; inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:60;
+  }
+  .confetti-piece{
+    position:absolute;
+    top:-20px;
+    width:8px; height:14px;
+    opacity:0.9;
+    animation:confettiFall linear forwards;
+  }
+  @keyframes confettiFall{
+    to{ transform:translateY(110vh) rotate(540deg); opacity:0.2; }
+  }
+
+  footer{
+    position:relative; z-index:1;
+    text-align:center;
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:rgba(185,178,162,0.4);
+    padding:20px 0 40px;
+  }
+
+  /* ---------- MOD / BACK OFFICE ---------- */
+  .backoffice-overlay{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.7);
+    backdrop-filter:blur(4px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+  }
+  .backoffice-overlay.open{ display:flex; }
+  .backoffice{
+    width:min(360px, 90vw);
+    background:linear-gradient(160deg, #1a1410, #0e0a08);
+    border:1px solid var(--brass);
+    border-radius:16px;
+    padding:26px;
+    box-shadow:0 30px 80px rgba(0,0,0,0.6);
+  }
+  .backoffice h2{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    color:var(--brass-bright);
+    margin:0 0 4px;
+    font-size:20px;
+  }
+  .backoffice p.hint{
+    font-size:11px;
+    color:var(--text-dim);
+    margin:0 0 18px;
+  }
+  .backoffice label{
+    display:block;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin:14px 0 6px;
+  }
+  .backoffice input, .backoffice select{
+    width:100%;
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--line);
+    color:var(--text-color);
+    padding:10px 12px;
+    border-radius:8px;
+    font-family:'Space Mono', monospace;
+  }
+  .backoffice input[type="color"]{
+    height:44px;
+    padding:4px;
+    cursor:pointer;
+  }
+  .theme-toggle-btn, .sound-toggle-btn{
+    position:fixed;
+    top:18px;
+    z-index:40;
+    width:42px; height:42px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--line);
+    color:var(--text-color);
+    font-size:18px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition:border-color .2s ease;
+  }
+  .theme-toggle-btn{ right:18px; }
+  .sound-toggle-btn{ right:70px; }
+  .theme-toggle-btn:hover, .sound-toggle-btn:hover{ border-color:var(--brass); }
+  .sound-toggle-btn.muted{ color:var(--text-dim); opacity:0.7; }
+  .backoffice .row-btns{
+    display:flex; gap:10px; margin-top:20px;
+  }
+  .backoffice button{
+    flex:1;
+    padding:10px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .backoffice .apply{ background:var(--brass); color:var(--ink); }
+  .backoffice .close{ background:transparent; border:1px solid var(--line); color:var(--text-color); }
+  .backoffice .checkbox-row{
+    display:flex; align-items:center; gap:10px;
+    margin-top:16px;
+  }
+  .backoffice .checkbox-row input{ width:auto; }
+  .backoffice .checkbox-row label{
+    margin:0; text-transform:none; letter-spacing:0; font-size:13px; color:var(--text-color);
+  }
+  .backoffice .reset, .challenge-active .reset{
+    margin-top:10px;
+    width:100%;
+    background:transparent;
+    border:1px solid var(--loss);
+    color:var(--loss);
+    padding:8px;
+    border-radius:8px;
+    font-size:12px;
+    cursor:pointer;
+  }
+
+  /* ---------- MOD ACCESS BUTTON + PASSWORD GATE ---------- */
+  .mod-access-btn{
+    position:fixed;
+    right:18px; bottom:18px;
+    z-index:40;
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    background:rgba(14,18,16,0.85);
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:10px 16px;
+    border-radius:100px;
+    cursor:pointer;
+    backdrop-filter:blur(6px);
+    transition:all .2s ease;
+  }
+  .mod-access-btn:hover{
+    border-color:var(--brass);
+    color:var(--brass-bright);
+  }
+
+  .password-overlay{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.7);
+    backdrop-filter:blur(4px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+  }
+  .password-overlay.open{ display:flex; }
+  .password-box{
+    width:min(320px, 90vw);
+    background:linear-gradient(160deg, #1a1410, #0e0a08);
+    border:1px solid var(--brass);
+    border-radius:16px;
+    padding:26px;
+    box-shadow:0 30px 80px rgba(0,0,0,0.6);
+  }
+  .password-box h2{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    color:var(--brass-bright);
+    margin:0 0 4px;
+    font-size:20px;
+  }
+  .password-box p.hint{
+    font-size:11px;
+    color:var(--text-dim);
+    margin:0 0 18px;
+  }
+  .password-box input{
+    width:100%;
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--line);
+    color:var(--text-color);
+    padding:10px 12px;
+    border-radius:8px;
+    font-family:'Space Mono', monospace;
+    letter-spacing:0.1em;
+  }
+  .password-error{
+    font-size:12px;
+    color:var(--loss);
+    min-height:16px;
+    margin-top:8px;
+  }
+  .password-box .row-btns{
+    display:flex; gap:10px; margin-top:16px;
+  }
+  .password-box button{
+    flex:1;
+    padding:10px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .password-box .apply{ background:var(--brass); color:var(--ink); }
+  .password-box .close{ background:transparent; border:1px solid var(--line); color:var(--text-color); }
+
+  /* ---------- CHALLENGE A FRIEND ---------- */
+  .challenge-setup, .challenge-active, .challenge-result{
+    background:linear-gradient(160deg, var(--table-color), var(--table-color-dark));
+    border:2px solid var(--brass);
+    border-radius:16px;
+    padding:26px 24px;
+    box-shadow:inset 0 0 30px rgba(0,0,0,0.6), 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .challenge-setup h2, .challenge-active h2, .challenge-result h2{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    color:var(--brass-bright);
+    margin:0 0 6px;
+    font-size:22px;
+  }
+  .challenge-setup .hint, .challenge-active .hint, .challenge-result .hint{
+    font-size:12px;
+    color:var(--text-dim);
+    margin:0 0 18px;
+    line-height:1.5;
+  }
+  .challenge-setup label{
+    display:block;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin:14px 0 6px;
+  }
+  .challenge-setup input[type="text"], .challenge-setup input[type="number"]{
+    width:100%;
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--line);
+    color:var(--text-color);
+    padding:10px 12px;
+    border-radius:8px;
+    font-family:'Space Mono', monospace;
+  }
+  .challenge-modes{
+    display:flex; flex-wrap:wrap; gap:10px 20px;
+    margin-top:4px;
+  }
+  .mode-check{
+    display:flex !important; align-items:center; gap:6px;
+    font-size:13px; color:var(--text-color) !important;
+    text-transform:none !important; letter-spacing:0 !important;
+    cursor:pointer; margin:0 !important;
+  }
+  .mode-check input{ width:auto; accent-color:var(--brass); }
+
+  .challenge-scores{
+    display:flex; flex-direction:column; gap:10px;
+    margin:16px 0;
+  }
+  .challenge-score-row{
+    display:flex; justify-content:space-between; align-items:center;
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 16px;
+  }
+  .challenge-score-row .name{
+    color:var(--text-color); font-weight:600; font-family:'Inter',sans-serif; font-size:14px;
+  }
+  .challenge-score-row .amount{
+    color:var(--brass-bright); font-family:'Space Mono', monospace; font-size:13px;
+  }
+  .challenge-score-row.active-turn{
+    border-color:var(--brass);
+    background:rgba(201,162,75,0.12);
+  }
+  .challenge-score-row.winner{ border-color:var(--win); }
+  .challenge-score-row.winner .amount{ color:var(--win); }
+
+  .challenge-banner{
+    display:none;
+    position:relative; z-index:2;
+    max-width:420px;
+    margin:16px auto 0;
+    padding:10px 20px;
+    background:linear-gradient(160deg, var(--table-color), var(--table-color-dark));
+    border:1px solid var(--brass);
+    border-radius:100px;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+  }
+  .challenge-banner.visible{ display:flex; }
+  .challenge-banner .challenge-turn{
+    color:var(--brass-bright); font-weight:600; font-size:12px; display:block;
+  }
+  .challenge-banner .challenge-sub{
+    color:var(--text-dim); font-size:11px; display:block;
+  }
+  .challenge-banner button{
+    background:transparent; border:1px solid var(--line); color:var(--text-color);
+    padding:6px 14px; border-radius:100px; font-size:11px; cursor:pointer; flex-shrink:0;
+  }
+  .challenge-banner button:hover{ border-color:var(--loss); color:var(--loss); }
+
+  nav.tabs button:disabled, nav.tabs button.locked{
+    opacity:0.35; cursor:not-allowed;
+  }
+  nav.tabs button:disabled:hover, nav.tabs button.locked:hover{
+    border-color:var(--line); color:var(--text-dim);
+  }
+
+
+  @media (max-width: 600px){
+    .marquee{ padding:24px 12px 14px; }
+    .marquee .emblem{ font-size:11px; padding:5px 14px; }
+    .sub{ font-size:11px; letter-spacing:0.08em; }
+
+    .theme-toggle-btn{ top:10px; right:10px; width:36px; height:36px; font-size:16px; }
+    .sound-toggle-btn{ top:10px; right:54px; width:36px; height:36px; font-size:16px; }
+
+    .ledger{ margin:18px 14px 0; padding:14px 18px; max-width:none; }
+    .ledger .amount{ font-size:24px; }
+
+    nav.tabs{ gap:6px; margin:20px auto 0; padding:0 12px; }
+    nav.tabs button{ font-size:14px; padding:8px 16px; }
+
+    main{ margin:24px auto 60px; padding:0 12px; }
+
+    /* Roulette wheel: shrink the wheel itself; number label positions are
+       computed from the wheel's actual rendered size in JS, so they stay
+       aligned automatically at this smaller size. */
+    .wheel-frame{ width:196px; height:196px; }
+    .wheel-center{ width:52px; height:52px; font-size:16px; }
+    .wheel-number{ font-size:8px; }
+
+    .bet-chip{ padding:8px 13px; font-size:12px; }
+    .stake-row{ gap:10px; flex-wrap:wrap; }
+    .stake-row input{ width:100px; }
+    .number-pick input{ width:60px; }
+
+    /* Slots: shrink reels so 3 fit comfortably without horizontal scroll */
+    .reels{ gap:8px; padding:14px; }
+    .reel{ width:64px; height:76px; font-size:32px; }
+
+    /* Blackjack cards */
+    .card{ width:44px; height:62px; }
+    .card-corner{ font-size:9px; }
+    .card-center{ font-size:20px; }
+
+    /* Dice */
+    .dice-tray{ gap:12px; padding:20px; flex-wrap:wrap; }
+    .die{ width:52px; height:52px; font-size:26px; }
+
+    /* Hi-Lo / Plinko containers, and blackjack table, scale their padding down */
+    .hilo-table, .blackjack-table{ padding:18px 14px; }
+    .plinko-board{ transform:scale(0.86); transform-origin:top center; margin-bottom:-40px; }
+
+    .backoffice, .password-box{ width:min(320px, 92vw); padding:20px; }
+
+    .challenge-setup, .challenge-active, .challenge-result{ padding:20px 16px; }
+    .challenge-modes{ gap:8px 14px; }
+    .challenge-banner{ max-width:none; margin:14px 14px 0; padding:8px 14px; }
+    .challenge-banner .challenge-turn{ font-size:11px; }
+    .challenge-banner .challenge-sub{ font-size:10px; }
+  }
+</style>
+</head>
+<body>
+
+<button class="sound-toggle-btn" id="soundToggleBtn" title="Toggle sound" aria-label="Toggle sound">🔊</button>
+<button class="theme-toggle-btn" id="themeToggleBtn" title="Theme settings" aria-label="Theme settings">🎨</button>
+
+<div class="marquee">
+  <span class="emblem" id="emblem">The Gilded Fox</span>
+  <h1 class="title">Members' Room</h1>
+  <div class="sub">Play chips only · nothing here is worth a cent</div>
+</div>
+
+<div class="backoffice-overlay" id="themeOverlay">
+  <div class="backoffice">
+    <h2>Theme</h2>
+    <p class="hint">Background/text and table color can be changed independently. Saved to this browser.</p>
+
+    <label for="bgColorInput">Background color</label>
+    <input type="color" id="bgColorInput" value="#0e1210">
+
+    <label for="textColorInput">Text color</label>
+    <input type="color" id="textColorInput" value="#efe7d8">
+
+    <label for="tableColorInput">Table color</label>
+    <input type="color" id="tableColorInput" value="#12261f">
+
+    <div class="row-btns">
+      <button class="apply" id="closeTheme">Done</button>
+    </div>
+    <button class="reset" id="resetTheme">Reset to default colors</button>
+  </div>
+</div>
+
+<div class="ledger">
+  <div>
+    <div class="label">Balance</div>
+    <div class="amount" id="balance">1,000</div>
+  </div>
+  <button class="mod-access-btn" id="redeemOpenBtn" style="position:static; margin-left:12px;" onclick="openRedeem()">🎁 Redeem code</button>
+  <div class="multiplier" id="multiplierDisplay"></div>
+</div>
+
+<div class="challenge-banner" id="challengeBanner">
+  <div>
+    <span class="challenge-turn" id="challengeTurnLabel"></span>
+    <span class="challenge-sub" id="challengeSubLabel"></span>
+  </div>
+  <button id="challengeCancelBtn">Cancel</button>
+</div>
+
+<nav class="tabs">
+  <button class="active" data-room="roulette">Roulette</button>
+  <button data-room="slots">Slots</button>
+  <button data-room="blackjack">Blackjack</button>
+  <button data-room="dice">Dice</button>
+  <button data-room="hilo">Hi-Lo</button>
+  <button data-room="plinko">Plinko</button>
+  <button data-room="challenge">Challenge</button>
+  <button data-room="stats">Stats</button>
+</nav>
+
+<main>
+  <section class="room active" id="room-roulette">
+    <div class="wheel-wrap">
+      <div class="wheel-frame">
+        <div class="wheel" id="wheel"></div>
+        <div class="wheel-center">GF</div>
+      </div>
+
+      <div class="bet-row">
+        <button class="bet-chip" data-color="red" data-color-select="red">Red · 2×</button>
+        <button class="bet-chip" data-color="black" data-color-select="black">Black · 2×</button>
+        <button class="bet-chip" data-color="green" data-color-select="green">Green · 14×</button>
+        <button class="bet-chip" data-color="even" data-color-select="even">Even · 2×</button>
+        <button class="bet-chip" data-color="odd" data-color-select="odd">Odd · 2×</button>
+        <button class="bet-chip" data-color="number" data-color-select="number">Straight Up · 35×</button>
+      </div>
+
+      <div class="number-pick" id="numberPick" style="display:none;">
+        <label for="straightNumber">Pick a number (0–36)</label>
+        <input type="number" id="straightNumber" min="0" max="36" value="0">
+      </div>
+
+      <div class="stake-row">
+        <input type="number" id="rouletteStake" value="50" min="1">
+        <button class="spin-btn" id="spinBtn">Spin</button>
+      </div>
+
+      <div class="result-line" id="rouletteResult"></div>
+    </div>
+  </section>
+
+  <section class="room" id="room-slots">
+    <div class="slot-machine">
+      <div class="reels">
+        <div class="reel" id="reel0">🍒</div>
+        <div class="reel" id="reel1">🍒</div>
+        <div class="reel" id="reel2">🍒</div>
+      </div>
+
+      <div class="paytable">
+        Three of a kind pays: <b>7️⃣7️⃣7️⃣ = 40×</b> · <b>💎💎💎 = 20×</b> · <b>🔔🔔🔔 = 10×</b> · <b>🍇🍇🍇 = 6×</b> · <b>🍒🍒🍒 = 4×</b><br>
+        Any two matching = 1× stake back
+      </div>
+
+      <div class="stake-row">
+        <input type="number" id="slotStake" value="50" min="1">
+        <button class="pull-btn" id="pullBtn">Pull</button>
+      </div>
+
+      <div class="result-line" id="slotResult"></div>
+    </div>
+  </section>
+
+  <section class="room" id="room-blackjack">
+    <div class="blackjack-table">
+      <div class="hand-block">
+        <div class="hand-label">Dealer</div>
+        <div class="card-row" id="dealerCards"></div>
+        <div class="hand-total" id="dealerTotal">&nbsp;</div>
+      </div>
+      <div class="player-hands-row" id="playerHandsRow"></div>
+    </div>
+
+    <div class="paytable">
+      Blackjack pays <b>3:2</b> · Win pays <b>2×</b> · Push returns your stake · Dealer stands on 17 · Split once per hand · Insurance pays <b>2:1</b>
+    </div>
+
+    <div class="stake-row">
+      <input type="number" id="blackjackStake" value="50" min="1">
+      <button class="deal-btn" id="dealBtn">Deal</button>
+    </div>
+
+    <div class="insurance-row" id="insuranceRow" style="display:none">
+      <span>Dealer shows an Ace — take insurance?</span>
+      <button class="bet-chip" id="insuranceYesBtn">Yes</button>
+      <button class="bet-chip" id="insuranceNoBtn">No</button>
+    </div>
+
+    <div class="bet-row" id="blackjackActions" style="display:none; margin-top:14px;">
+      <button class="bet-chip" id="hitBtn">Hit</button>
+      <button class="bet-chip" id="standBtn">Stand</button>
+      <button class="bet-chip" id="doubleBtn">Double</button>
+      <button class="bet-chip" id="splitBtn">Split</button>
+    </div>
+
+    <div class="result-line" id="blackjackResult"></div>
+  </section>
+
+  <section class="room" id="room-dice">
+    <div class="dice-tray">
+      <div class="die" id="die0">⚀</div>
+      <div class="die" id="die1">⚀</div>
+    </div>
+    <div class="dice-total" id="diceTotal">&nbsp;</div>
+
+    <div class="bet-row" style="margin-top:18px;">
+      <button class="bet-chip" data-dice="under" data-dice-select="under">Under 7 · 2×</button>
+      <button class="bet-chip" data-dice="seven" data-dice-select="seven">Exactly 7 · 5×</button>
+      <button class="bet-chip" data-dice="over" data-dice-select="over">Over 7 · 2×</button>
+    </div>
+
+    <div class="stake-row">
+      <input type="number" id="diceStake" value="50" min="1">
+      <button class="spin-btn" id="rollBtn">Roll</button>
+    </div>
+
+    <div class="result-line" id="diceResult"></div>
+  </section>
+
+  <section class="room" id="room-hilo">
+    <div class="hilo-table">
+      <div class="hand-label">Current Card</div>
+      <div class="card-row" id="hiloCards"></div>
+      <div class="hilo-streak" id="hiloStreak">&nbsp;</div>
+      <div class="hilo-multiplier" id="hiloMultiplier">&nbsp;</div>
+    </div>
+
+    <div class="stake-row">
+      <input type="number" id="hiloStake" value="50" min="1">
+      <button class="deal-btn" id="hiloStartBtn">Start</button>
+    </div>
+
+    <div class="bet-row" id="hiloActions" style="display:none; margin-top:14px;">
+      <button class="bet-chip" id="hiloHigherBtn">Higher</button>
+      <button class="bet-chip" id="hiloLowerBtn">Lower</button>
+      <button class="cashout-btn" id="hiloCashoutBtn" disabled>Cash Out</button>
+    </div>
+
+    <div class="result-line" id="hiloResult"></div>
+  </section>
+
+  <section class="room" id="room-plinko">
+    <div class="plinko-board" id="plinkoBoard">
+      <div class="plinko-slots" id="plinkoSlots"></div>
+    </div>
+
+    <div class="stake-row">
+      <input type="number" id="plinkoStake" value="50" min="1">
+      <button class="spin-btn" id="dropBtn">Drop Ball</button>
+    </div>
+
+    <div class="result-line" id="plinkoResult"></div>
+  </section>
+
+  <section class="room" id="room-challenge">
+    <div class="challenge-setup" id="challengeSetup">
+      <h2>Challenge a friend</h2>
+      <p class="hint">Same device, two players. Set the stakes and take turns — whoever has the most chips when everyone's out of attempts takes the whole pot.</p>
+
+      <label for="p1Name">Player 1 name</label>
+      <input type="text" id="p1Name" value="Player 1" maxlength="20">
+
+      <label for="p2Name">Player 2 name</label>
+      <input type="text" id="p2Name" value="Player 2" maxlength="20">
+
+      <label for="challengeStartChips">Starting chips (each)</label>
+      <input type="number" id="challengeStartChips" value="500" min="1">
+
+      <label for="challengeAttempts">Attempts per player</label>
+      <input type="number" id="challengeAttempts" value="10" min="1">
+
+      <label>Allowed games</label>
+      <div class="challenge-modes" id="challengeModes">
+        <label class="mode-check"><input type="checkbox" value="roulette" checked> Roulette</label>
+        <label class="mode-check"><input type="checkbox" value="slots" checked> Slots</label>
+        <label class="mode-check"><input type="checkbox" value="blackjack" checked> Blackjack</label>
+        <label class="mode-check"><input type="checkbox" value="dice" checked> Dice</label>
+        <label class="mode-check"><input type="checkbox" value="hilo" checked> Hi-Lo</label>
+        <label class="mode-check"><input type="checkbox" value="plinko" checked> Plinko</label>
+      </div>
+
+      <button class="deal-btn" id="startChallengeBtn" style="margin-top:18px;">Start challenge</button>
+      <div class="result-line" id="challengeSetupError"></div>
+    </div>
+
+    <div class="challenge-active" id="challengeActivePanel" style="display:none;">
+      <h2 id="challengeActiveTitle"></h2>
+      <p class="hint" id="challengeActiveHint"></p>
+      <div class="challenge-scores" id="challengeScores"></div>
+      <button class="reset" id="endChallengeEarlyBtn">End challenge now</button>
+    </div>
+
+    <div class="challenge-result" id="challengeResultPanel" style="display:none;">
+      <h2 id="challengeResultTitle"></h2>
+      <p class="hint" id="challengeResultText"></p>
+      <div class="challenge-scores" id="challengeResultScores"></div>
+      <button class="deal-btn" id="newChallengeBtn">Start a new challenge</button>
+    </div>
+  </section>
+
+  <section class="room" id="room-stats">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Hands Played</div><div class="stat-value" id="statHands">0</div></div>
+      <div class="stat-card"><div class="stat-label">Total Wagered</div><div class="stat-value" id="statWagered">0</div></div>
+      <div class="stat-card"><div class="stat-label">Total Won</div><div class="stat-value" id="statWon">0</div></div>
+      <div class="stat-card"><div class="stat-label">Biggest Win</div><div class="stat-value" id="statBiggest">0</div></div>
+      <div class="stat-card"><div class="stat-label">Win Streak</div><div class="stat-value" id="statStreak">0</div></div>
+      <div class="stat-card"><div class="stat-label">Peak Balance</div><div class="stat-value" id="statPeak">1,000</div></div>
+    </div>
+
+    <div class="achievements-title">Achievements</div>
+    <div id="achievementsList"></div>
+  </section>
+</main>
+
+<footer>Simulated chips only — no real money is involved, ever.</footer>
+
+<div class="confetti-layer" id="confettiLayer"></div>
+
+<button class="mod-access-btn" id="modAccessBtn" style="display:none;">⚙ Back Office</button>
+
+<!-- PASSWORD GATE -->
+<div class="password-overlay" id="redeemOverlay">
+  <div class="password-box">
+    <h2>Redeem Code</h2>
+    <p class="hint">Got a one-time code? Enter it below.</p>
+    <input type="text" id="redeemCodeInput" placeholder="CODE" autocomplete="off" style="text-transform:uppercase;">
+    <div class="password-error" id="redeemError">&nbsp;</div>
+    <div class="row-btns">
+      <button class="apply" id="redeemSubmitBtn">Redeem</button>
+      <button class="close" id="cancelRedeem">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="password-overlay" id="passwordOverlay">
+  <div class="password-box">
+    <h2>Staff Access</h2>
+    <p class="hint">Enter the back office password.</p>
+    <input type="password" id="passwordInput" placeholder="Password" autocomplete="off">
+    <div class="password-error" id="passwordError">&nbsp;</div>
+    <div class="row-btns">
+      <button class="apply" id="submitPassword">Enter</button>
+      <button class="close" id="cancelPassword">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- BACK OFFICE (mod menu) -->
+<div class="backoffice-overlay" id="backofficeOverlay">
+  <div class="backoffice">
+    <h2>Back Office</h2>
+    <p class="hint">House controls — visible to members who know where to look.</p>
+
+    <label for="addAmount">Add chips</label>
+    <input type="number" id="addAmount" value="500">
+
+    <label for="setBalanceAmount">Set exact balance</label>
+    <input type="number" id="setBalanceAmount" placeholder="Leave blank to skip">
+
+    <label for="luckInput">Luck multiplier (1–10×)</label>
+    <input type="number" id="luckInput" value="1" min="1" max="10" step="0.1">
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="houseEdgeToggle">
+      <label for="houseEdgeToggle">House edge off (fair odds across the board)</label>
+    </div>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="unlimitedChipsToggle">
+      <label for="unlimitedChipsToggle">Unlimited chips (auto-refill, never run low)</label>
+    </div>
+
+    <div class="row-btns">
+      <button class="apply" id="applyBackoffice">Apply</button>
+      <button class="close" id="closeBackoffice">Close</button>
+    </div>
+
+    <button class="reset" id="forceLuckyRoundBtn" style="border-color:var(--win); color:var(--win);">🍀 Force lucky round (next round only)</button>
+    <button class="reset" id="unlockAllAchievementsBtn" style="border-color:var(--brass); color:var(--brass-bright);">🏆 Unlock all achievements</button>
+
+    <label for="saveDataBox" style="margin-top:20px;">Save data (export / import)</label>
+    <textarea id="saveDataBox" rows="4" placeholder="Export writes here — paste a save here and Import to load it" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--line); color:var(--text-color); padding:10px 12px; border-radius:8px; font-family:'Space Mono', monospace; font-size:11px; resize:vertical;"></textarea>
+    <div class="row-btns">
+      <button class="apply" id="exportSaveBtn">Export</button>
+      <button class="close" id="importSaveBtn">Import</button>
+    </div>
+    <div class="result-line" id="saveDataStatus"></div>
+
+    <button class="reset" id="resetBackoffice">Reset balance to 1,000</button>
+    <button class="reset" id="resetStatsBtn">Reset stats &amp; achievements</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---------- STATE ----------
+  let balance = 1000;
+  let luckMultiplier = 1; // >1 skews odds in the player's favor
+  let houseEdgeOff = false;
+  let unlimitedChips = false; // auto-refills balance so it never runs low
+  let oneShotLuckRestore = null; // holds the previous luckMultiplier while a one-round boost is active
+
+  // ---------- SOUND ----------
+  // All effects are synthesized on the fly with the Web Audio API — no audio
+  // files to host. `soundEnabled` gates everything and is persisted, and the
+  // AudioContext is created lazily on first use so it starts in a
+  // browser-allowed state (most browsers require a user gesture first,
+  // which is naturally satisfied since sounds only ever start from clicks).
+  let soundEnabled = true;
+  let audioCtx = null;
+
+  function getAudioCtx(){
+    if (!audioCtx){
+      try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (e){ audioCtx = null; }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playTone(freq, duration, type, gainLevel, delay){
+    if (!soundEnabled) return;
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const t0 = ctx.currentTime + (delay || 0);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(gainLevel != null ? gainLevel : 0.14, t0);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.03);
+  }
+
+  function playClick(){
+    playTone(720, 0.045, 'square', 0.05, 0);
+  }
+  function playFlip(){
+    playTone(320, 0.05, 'square', 0.05, 0);
+  }
+  function playWhoosh(){
+    if (!soundEnabled) return;
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(110, t0);
+    osc.frequency.exponentialRampToValueAtTime(480, t0 + 0.35);
+    gain.gain.setValueAtTime(0.05, t0);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.4);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.42);
+  }
+  function playWin(){
+    [523.25, 659.25, 783.99].forEach((f, i) => playTone(f, 0.16, 'triangle', 0.13, i * 0.09));
+  }
+  function playBigWin(){
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => playTone(f, 0.22, 'triangle', 0.15, i * 0.1));
+  }
+  function playLoss(){
+    playTone(220, 0.18, 'sawtooth', 0.09, 0);
+    playTone(164.81, 0.24, 'sawtooth', 0.08, 0.08);
+  }
+  function playPush(){
+    playTone(392, 0.12, 'sine', 0.08, 0);
+  }
+  function playAchievement(){
+    [659.25, 783.99, 987.77, 1318.51].forEach((f, i) => playTone(f, 0.24, 'sine', 0.15, i * 0.09));
+  }
+
+  const soundToggleBtn = document.getElementById('soundToggleBtn');
+  function renderSoundToggle(){
+    soundToggleBtn.textContent = soundEnabled ? '🔊' : '🔇';
+    soundToggleBtn.classList.toggle('muted', !soundEnabled);
+  }
+  soundToggleBtn.addEventListener('click', ()=>{
+    soundEnabled = !soundEnabled;
+    renderSoundToggle();
+    saveGame();
+    if (soundEnabled) playClick();
+  });
+
+  // A light click on every button press gives tactile feedback across the
+  // whole site (game actions, tabs, mod menu, theme panel, etc.) without
+  // needing a listener wired up on each one individually.
+  document.addEventListener('click', (e)=>{
+    if (e.target.closest('button')) playClick();
+  });
+
+  let selectedColor = 'red';
+  let spinning = false;
+  let pulling = false;
+
+  const stats = {
+    handsPlayed: 0,
+    totalWagered: 0,
+    totalWon: 0,
+    biggestWin: 0,
+    currentStreak: 0,
+    bestStreak: 0,
+    peakBalance: 1000,
+    currentLossStreak: 0,
+    bestLossStreak: 0,
+    lowestBalance: 1000,
+    modesPlayed: {}
+  };
+
+  const ACHIEVEMENTS = [
+    { id:'first', name:'First Blood', desc:'Play your first round', badge:'🎲', check: s => s.handsPlayed >= 1 },
+    { id:'highroller', name:'High Roller', desc:'Wager 500+ chips in a single round', badge:'💰', check: (s, ctx) => ctx.lastWager >= 500 },
+    { id:'whale', name:'Whale', desc:'Wager 2,000+ chips in a single round', badge:'🐋', check: (s, ctx) => ctx.lastWager >= 2000 },
+    { id:'hotstreak', name:'Hot Hand', desc:'Win 3 rounds in a row', badge:'🔥', check: s => s.bestStreak >= 3 },
+    { id:'perfectionist', name:'Perfectionist', desc:'Win 10 rounds in a row', badge:'💯', check: s => s.bestStreak >= 10 },
+    { id:'ironstomach', name:'Iron Stomach', desc:'Lose 5 rounds in a row and keep playing', badge:'🥶', check: s => s.bestLossStreak >= 5 },
+    { id:'jackpot', name:'Jackpot', desc:'Win 5× your stake or more in one round', badge:'✨', check: (s, ctx) => ctx.lastMultiple >= 5 },
+    { id:'grinder', name:'Grinder', desc:'Play 25 rounds', badge:'⏱️', check: s => s.handsPlayed >= 25 },
+    { id:'marathon', name:'Marathon', desc:'Play 100 rounds', badge:'🏃', check: s => s.handsPlayed >= 100 },
+    { id:'millionaire', name:'Big Balance', desc:'Reach a balance of 5,000 chips', badge:'👑', check: s => s.peakBalance >= 5000 },
+    { id:'untouchable', name:'Untouchable', desc:'Reach a balance of 10,000 chips', badge:'💎', check: s => s.peakBalance >= 10000 },
+    { id:'comeback', name:'Comeback Kid', desc:'Drop to 50 chips or below, then climb back to 1,000+', badge:'🌅', check: s => s.lowestBalance <= 50 && s.peakBalance >= 1000 },
+    { id:'explorer', name:'Table Hopper', desc:'Play at least one round in every game', badge:'🗺️', check: s => Object.keys(s.modesPlayed || {}).length >= 6 },
+    { id:'naturalbj', name:'Natural', desc:'Win a hand with a natural blackjack', badge:'🂡', check: (s, ctx) => ctx.detail === 'naturalBlackjack' },
+    { id:'snakeeyes', name:'Snake Eyes', desc:'Roll doubles on the dice', badge:'🎲', check: (s, ctx) => ctx.detail === 'diceDoubles' },
+    { id:'greenlight', name:'Green Light', desc:'Win a straight bet on green (0) in Roulette', badge:'🟢', check: (s, ctx) => ctx.detail === 'rouletteGreen' },
+    { id:'edgelord', name:'Edge Lord', desc:'Land the ball in Plinko\'s top payout slot', badge:'🏓', check: (s, ctx) => ctx.detail === 'plinkoEdge' },
+    { id:'nerves', name:'Nerves of Steel', desc:'Reach a streak of 5 in Hi-Lo', badge:'🧊', check: (s, ctx) => ctx.detail === 'hiloStreak5' }
+  ];
+  const unlockedAchievements = new Set();
+
+  // ---------- THEME (background+text, and table color — independent) ----------
+  const DEFAULT_THEME = { bg: '#0e1210', text: '#efe7d8', table: '#12261f' };
+  let currentTheme = { ...DEFAULT_THEME };
+
+  function applyTheme(theme){
+    const root = document.documentElement.style;
+    root.setProperty('--bg-color', theme.bg);
+    root.setProperty('--text-color', theme.text);
+    root.setProperty('--table-color', theme.table);
+    const bgInput = document.getElementById('bgColorInput');
+    const textInput = document.getElementById('textColorInput');
+    const tableInput = document.getElementById('tableColorInput');
+    if (bgInput) bgInput.value = theme.bg;
+    if (textInput) textInput.value = theme.text;
+    if (tableInput) tableInput.value = theme.table;
+  }
+
+  // ---------- SAVE / LOAD (localStorage) ----------
+  // Persists balance, stats, achievements and theme in the visitor's browser
+  // so progress and preferences survive page reloads and return visits when
+  // the game is hosted on a real website. Wrapped in try/catch since
+  // localStorage can be unavailable (private browsing, some embedded
+  // contexts, etc).
+  const SAVE_KEY = 'gildedFoxSave_v1';
+
+  function saveGame(){
+    // While a friend challenge is in progress, `balance` temporarily holds a
+    // player's challenge stake rather than the real persistent balance —
+    // never let that leak into the real save.
+    if (challengeState && challengeState.active) return;
+    try{
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        balance,
+        stats,
+        unlocked: Array.from(unlockedAchievements),
+        theme: currentTheme,
+        unlimitedChips,
+        soundEnabled
+      }));
+    } catch (e){ /* storage unavailable — game just won't persist */ }
+  }
+
+  function loadGame(){
+    try{
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (typeof data.balance === 'number' && !isNaN(data.balance)) balance = data.balance;
+      if (data.stats && typeof data.stats === 'object') Object.assign(stats, data.stats);
+      if (Array.isArray(data.unlocked)) data.unlocked.forEach(id => unlockedAchievements.add(id));
+      if (data.theme && typeof data.theme === 'object'){
+        currentTheme = {
+          bg: data.theme.bg || DEFAULT_THEME.bg,
+          text: data.theme.text || DEFAULT_THEME.text,
+          table: data.theme.table || DEFAULT_THEME.table
+        };
+      }
+      if (typeof data.unlimitedChips === 'boolean') unlimitedChips = data.unlimitedChips;
+      if (typeof data.soundEnabled === 'boolean') soundEnabled = data.soundEnabled;
+    } catch (e){ /* ignore corrupt/unreadable save data */ }
+  }
+
+  loadGame();
+  applyTheme(currentTheme);
+  renderSoundToggle();
+
+  // ---------- THEME PANEL WIRING ----------
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  const themeOverlay = document.getElementById('themeOverlay');
+  const bgColorInput = document.getElementById('bgColorInput');
+  const textColorInput = document.getElementById('textColorInput');
+  const tableColorInput = document.getElementById('tableColorInput');
+
+  themeToggleBtn.addEventListener('click', ()=>{
+    themeOverlay.classList.add('open');
+  });
+  document.getElementById('closeTheme').addEventListener('click', ()=>{
+    themeOverlay.classList.remove('open');
+  });
+  themeOverlay.addEventListener('click', (e)=>{
+    if (e.target === themeOverlay) themeOverlay.classList.remove('open');
+  });
+
+  function updateThemeFromInputs(){
+    currentTheme = {
+      bg: bgColorInput.value,
+      text: textColorInput.value,
+      table: tableColorInput.value
+    };
+    applyTheme(currentTheme);
+    saveGame();
+  }
+  bgColorInput.addEventListener('input', updateThemeFromInputs);
+  textColorInput.addEventListener('input', updateThemeFromInputs);
+  tableColorInput.addEventListener('input', updateThemeFromInputs);
+
+  document.getElementById('resetTheme').addEventListener('click', ()=>{
+    currentTheme = { ...DEFAULT_THEME };
+    applyTheme(currentTheme);
+    saveGame();
+  });
+
+  // ---------- CHALLENGE A FRIEND ----------
+  // Local two-player, same-device contest layered on top of the existing
+  // single-player economy. While active, `balance` is repurposed to mean
+  // "whichever player's turn it is" — every existing game already reads and
+  // writes that one shared `balance` variable and calls recordRound() when a
+  // round finishes, so no changes are needed inside roulette/slots/
+  // blackjack/dice/hi-lo/plinko themselves. The real persistent balance is
+  // stashed away before the challenge starts and restored afterwards, and
+  // saveGame() (above) refuses to persist while challengeState.active is true.
+  const CHALLENGE_ROOMS = ['roulette','slots','blackjack','dice','hilo','plinko'];
+  let challengeState = null;       // null when no challenge is set up/active
+  let preChallengeBalance = null;  // real balance, stashed during the contest
+
+  const challengeSetupEl = document.getElementById('challengeSetup');
+  const challengeActiveEl = document.getElementById('challengeActivePanel');
+  const challengeResultEl = document.getElementById('challengeResultPanel');
+  const challengeBanner = document.getElementById('challengeBanner');
+  const challengeSetupError = document.getElementById('challengeSetupError');
+
+  function challengeModePanels(showSetup, showActive, showResult){
+    challengeSetupEl.style.display = showSetup ? 'block' : 'none';
+    challengeActiveEl.style.display = showActive ? 'block' : 'none';
+    challengeResultEl.style.display = showResult ? 'block' : 'none';
+  }
+
+  function updateTabAccess(){
+    document.querySelectorAll('nav.tabs button').forEach(btn=>{
+      const room = btn.dataset.room;
+      if (room === 'challenge' || room === 'stats'){ btn.disabled = false; return; }
+      const locked = challengeState && challengeState.active && !challengeState.allowedModes.includes(room);
+      btn.disabled = !!locked;
+      btn.classList.toggle('locked', !!locked);
+    });
+  }
+
+  document.getElementById('startChallengeBtn').addEventListener('click', ()=>{
+    const p1Name = document.getElementById('p1Name').value.trim() || 'Player 1';
+    const p2Name = document.getElementById('p2Name').value.trim() || 'Player 2';
+    const startChips = Math.floor(Number(document.getElementById('challengeStartChips').value));
+    const attempts = Math.floor(Number(document.getElementById('challengeAttempts').value));
+    const allowedModes = Array.from(document.querySelectorAll('#challengeModes input:checked')).map(el => el.value);
+
+    if (!startChips || startChips <= 0){
+      challengeSetupError.textContent = 'Enter a starting chip amount first.';
+      challengeSetupError.className = 'result-line loss';
+      return;
+    }
+    if (!attempts || attempts <= 0){
+      challengeSetupError.textContent = 'Enter at least 1 attempt per player.';
+      challengeSetupError.className = 'result-line loss';
+      return;
+    }
+    if (allowedModes.length === 0){
+      challengeSetupError.textContent = 'Pick at least one game for the challenge.';
+      challengeSetupError.className = 'result-line loss';
+      return;
+    }
+
+    preChallengeBalance = balance;
+
+    challengeState = {
+      active: true,
+      players: [
+        { name: p1Name, balance: startChips, attemptsLeft: attempts },
+        { name: p2Name, balance: startChips, attemptsLeft: attempts }
+      ],
+      activeIndex: 0,
+      attemptsPerPlayer: attempts,
+      allowedModes
+    };
+
+    balance = challengeState.players[0].balance;
+    renderBalance();
+    challengeModePanels(false, true, false);
+    challengeSetupError.textContent = '';
+    updateTabAccess();
+    renderChallengeActive();
+
+    // Jump to the first allowed game so play can start immediately.
+    const firstAllowedBtn = document.querySelector(`nav.tabs button[data-room="${allowedModes[0]}"]`);
+    if (firstAllowedBtn) firstAllowedBtn.click();
+  });
+
+  function renderChallengeActive(){
+    if (!challengeState) return;
+    const active = challengeState.players[challengeState.activeIndex];
+    const other = challengeState.players[1 - challengeState.activeIndex];
+
+    document.getElementById('challengeActiveTitle').textContent = `${active.name}'s turn`;
+    document.getElementById('challengeActiveHint').textContent =
+      `Attempt ${challengeState.attemptsPerPlayer - active.attemptsLeft + 1} of ${challengeState.attemptsPerPlayer} · ` +
+      `Allowed games: ${challengeState.allowedModes.join(', ')}`;
+
+    const scoresEl = document.getElementById('challengeScores');
+    scoresEl.innerHTML = '';
+    challengeState.players.forEach((p, i)=>{
+      const row = document.createElement('div');
+      row.className = 'challenge-score-row' + (i === challengeState.activeIndex ? ' active-turn' : '');
+      row.innerHTML = `<span class="name">${p.name}${i === challengeState.activeIndex ? ' (playing)' : ''}</span><span class="amount">${formatMoney(p.balance)} chips · ${p.attemptsLeft} left</span>`;
+      scoresEl.appendChild(row);
+    });
+
+    challengeBanner.classList.add('visible');
+    document.getElementById('challengeTurnLabel').textContent = `🎯 ${active.name}'s turn — ${active.attemptsLeft} attempt${active.attemptsLeft===1?'':'s'} left`;
+    document.getElementById('challengeSubLabel').textContent = `${other.name} has ${formatMoney(other.balance)} chips`;
+  }
+
+  function challengeHandleRound(wager, payout){
+    const active = challengeState.players[challengeState.activeIndex];
+    active.balance = balance;
+    active.attemptsLeft = Math.max(0, active.attemptsLeft - 1);
+
+    const p0Done = challengeState.players[0].attemptsLeft <= 0;
+    const p1Done = challengeState.players[1].attemptsLeft <= 0;
+
+    if (p0Done && p1Done){
+      endChallenge();
+      return;
+    }
+
+    // Switch to the other player unless they're already out of attempts.
+    const otherIndex = 1 - challengeState.activeIndex;
+    if (challengeState.players[otherIndex].attemptsLeft > 0){
+      challengeState.activeIndex = otherIndex;
+    }
+    balance = challengeState.players[challengeState.activeIndex].balance;
+    renderBalance();
+    renderChallengeActive();
+  }
+
+  function endChallenge(){
+    const [p1, p2] = challengeState.players;
+    const resultScores = document.getElementById('challengeResultScores');
+    resultScores.innerHTML = '';
+
+    let title, text;
+    if (p1.balance === p2.balance){
+      title = "It's a tie!";
+      text = `Both ${p1.name} and ${p2.name} finished with ${formatMoney(p1.balance)} chips — nobody takes the pot this time.`;
+      [p1, p2].forEach(p=>{
+        const row = document.createElement('div');
+        row.className = 'challenge-score-row';
+        row.innerHTML = `<span class="name">${p.name}</span><span class="amount">${formatMoney(p.balance)} chips</span>`;
+        resultScores.appendChild(row);
+      });
+    } else {
+      const winner = p1.balance > p2.balance ? p1 : p2;
+      const loser = p1.balance > p2.balance ? p2 : p1;
+      const pot = winner.balance + loser.balance;
+      title = `${winner.name} wins!`;
+      text = `${winner.name} takes home the whole pot — all ${formatMoney(pot)} chips.`;
+      [winner, loser].forEach(p=>{
+        const row = document.createElement('div');
+        const isWinner = p === winner;
+        row.className = 'challenge-score-row' + (isWinner ? ' winner' : '');
+        row.innerHTML = `<span class="name">${p.name}${isWinner ? ' 🏆' : ''}</span><span class="amount">${formatMoney(isWinner ? pot : 0)} chips</span>`;
+        resultScores.appendChild(row);
+      });
+    }
+
+    document.getElementById('challengeResultTitle').textContent = title;
+    document.getElementById('challengeResultText').textContent = text;
+
+    challengeState.active = false;
+    challengeBanner.classList.remove('visible');
+    updateTabAccess();
+    challengeModePanels(false, false, true);
+
+    // Restore the player's real balance — the challenge pot was self-contained
+    // and never touched the site's persistent chip stash.
+    balance = preChallengeBalance;
+    preChallengeBalance = null;
+    renderBalance();
+
+    const challengeTab = document.querySelector('nav.tabs button[data-room="challenge"]');
+    if (challengeTab) challengeTab.click();
+  }
+
+  document.getElementById('endChallengeEarlyBtn').addEventListener('click', ()=>{
+    if (!challengeState || !challengeState.active) return;
+    challengeState.players[challengeState.activeIndex].balance = balance;
+    // Force both attempt counters to 0 so endChallenge() scores whoever is
+    // ahead right now, same as running out of attempts naturally.
+    challengeState.players[0].attemptsLeft = 0;
+    challengeState.players[1].attemptsLeft = 0;
+    endChallenge();
+  });
+
+  document.getElementById('challengeCancelBtn').addEventListener('click', ()=>{
+    if (!challengeState || !challengeState.active) return;
+    challengeState.active = false;
+    challengeBanner.classList.remove('visible');
+    updateTabAccess();
+    balance = preChallengeBalance;
+    preChallengeBalance = null;
+    renderBalance();
+    challengeModePanels(true, false, false);
+    challengeState = null;
+  });
+
+  document.getElementById('newChallengeBtn').addEventListener('click', ()=>{
+    challengeState = null;
+    challengeModePanels(true, false, false);
+  });
+
+  updateTabAccess();
+
+  function recordRound(wager, payout, meta){
+    meta = meta || {};
+    if (challengeState && challengeState.active){
+      challengeHandleRound(wager, payout);
+      return;
+    }
+    stats.handsPlayed += 1;
+    stats.totalWagered += wager;
+    stats.totalWon += payout;
+    if (payout > stats.biggestWin) stats.biggestWin = payout;
+
+    if (meta.game){
+      stats.modesPlayed = stats.modesPlayed || {};
+      stats.modesPlayed[meta.game] = true;
+    }
+
+    if (payout > wager){
+      stats.currentStreak += 1;
+      if (stats.currentStreak > stats.bestStreak) stats.bestStreak = stats.currentStreak;
+      stats.currentLossStreak = 0;
+    } else if (payout < wager) {
+      stats.currentStreak = 0;
+      stats.currentLossStreak = (stats.currentLossStreak || 0) + 1;
+      if (stats.currentLossStreak > (stats.bestLossStreak || 0)) stats.bestLossStreak = stats.currentLossStreak;
+    }
+    if (balance > stats.peakBalance) stats.peakBalance = balance;
+    if (typeof stats.lowestBalance !== 'number' || balance < stats.lowestBalance) stats.lowestBalance = balance;
+
+    const ctx = { lastWager: wager, lastMultiple: wager > 0 ? payout / wager : 0, detail: meta.detail };
+    let newAchievementUnlocked = false;
+    ACHIEVEMENTS.forEach(a=>{
+      if (!unlockedAchievements.has(a.id) && a.check(stats, ctx)){
+        unlockedAchievements.add(a.id);
+        newAchievementUnlocked = true;
+      }
+    });
+
+    if (wager > 0 && payout >= wager * 5){
+      fireConfetti();
+      playBigWin();
+    } else if (payout > wager){
+      playWin();
+    } else if (payout < wager){
+      playLoss();
+    } else {
+      playPush();
+    }
+    if (newAchievementUnlocked) playAchievement();
+
+    renderStats();
+
+    // A "force lucky round" boost from the Back Office only applies to the
+    // single round that just resolved — revert it automatically now.
+    if (oneShotLuckRestore !== null){
+      luckMultiplier = oneShotLuckRestore;
+      oneShotLuckRestore = null;
+      renderBalance();
+    }
+  }
+
+  function fireConfetti(){
+    const layer = document.getElementById('confettiLayer');
+    const colors = ['#c9a24b','#e6c876','#3e8e7e','#efe7d8','#9a3b3b'];
+    for (let i=0;i<70;i++){
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random()*100 + 'vw';
+      piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+      piece.style.animationDuration = (1.8 + Math.random()*1.2) + 's';
+      piece.style.animationDelay = (Math.random()*0.3) + 's';
+      layer.appendChild(piece);
+      setTimeout(()=>piece.remove(), 3500);
+    }
+  }
+
+  function renderStats(){
+    document.getElementById('statHands').textContent = stats.handsPlayed;
+    document.getElementById('statWagered').textContent = formatMoney(stats.totalWagered);
+    document.getElementById('statWon').textContent = formatMoney(stats.totalWon);
+    document.getElementById('statBiggest').textContent = formatMoney(stats.biggestWin);
+    document.getElementById('statStreak').textContent = stats.bestStreak;
+    document.getElementById('statPeak').textContent = formatMoney(stats.peakBalance);
+
+    const list = document.getElementById('achievementsList');
+    list.innerHTML = '';
+    ACHIEVEMENTS.forEach(a=>{
+      const unlocked = unlockedAchievements.has(a.id);
+      const div = document.createElement('div');
+      div.className = 'achievement' + (unlocked ? ' unlocked' : '');
+      div.innerHTML = `<div class="badge">${a.badge}</div><div><div class="ach-name">${a.name}</div><div class="ach-desc">${a.desc}</div></div>`;
+      list.appendChild(div);
+    });
+    saveGame();
+  }
+
+  const balanceEl = document.getElementById('balance');
+  const multiplierDisplay = document.getElementById('multiplierDisplay');
+
+  function formatMoney(n){
+    return Math.round(n).toLocaleString('en-US');
+  }
+  function renderBalance(){
+    if (unlimitedChips && !(challengeState && challengeState.active) && balance < 100000){
+      balance = 1000000;
+    }
+    balanceEl.textContent = formatMoney(balance);
+    multiplierDisplay.textContent = luckMultiplier > 1 ? `Luck ${luckMultiplier}×` : '';
+    if (balance > stats.peakBalance) stats.peakBalance = balance;
+    saveGame();
+  }
+  renderBalance();
+  renderStats();
+
+  // ---------- TABS ----------
+  document.querySelectorAll('nav.tabs button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.room').forEach(r=>r.classList.remove('active'));
+      document.getElementById('room-' + btn.dataset.room).classList.add('active');
+      if (btn.dataset.room === 'stats') renderStats();
+    });
+  });
+
+  // ---------- ROULETTE ----------
+  const wheel = document.getElementById('wheel');
+  const spinBtn = document.getElementById('spinBtn');
+  const rouletteResult = document.getElementById('rouletteResult');
+  let wheelRotation = 0;
+
+  document.querySelectorAll('.bet-chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      document.querySelectorAll('.bet-chip').forEach(c=>c.classList.remove('selected'));
+      chip.classList.add('selected');
+      selectedColor = chip.dataset.colorSelect;
+      document.getElementById('numberPick').style.display = (selectedColor === 'number') ? 'flex' : 'none';
+    });
+  });
+  document.querySelector('.bet-chip[data-color-select="red"]').classList.add('selected');
+
+  let selectedNumber = 0;
+  const straightNumberInput = document.getElementById('straightNumber');
+  straightNumberInput.addEventListener('input', ()=>{
+    let n = Math.floor(Number(straightNumberInput.value));
+    if (isNaN(n)) n = 0;
+    n = Math.min(36, Math.max(0, n));
+    selectedNumber = n;
+  });
+
+  // Standard European single-zero wheel: 0 is green, rest split red/black
+  const RED_NUMBERS = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+  function numberColor(n){
+    if (n === 0) return 'green';
+    return RED_NUMBERS.includes(n) ? 'red' : 'black';
+  }
+  function numberParity(n){
+    if (n === 0) return null; // zero is neither even nor odd for betting purposes
+    return (n % 2 === 0) ? 'even' : 'odd';
+  }
+  function betMatches(n, betType){
+    if (betType === 'green') return n === 0;
+    if (betType === 'red' || betType === 'black') return numberColor(n) === betType;
+    if (betType === 'even' || betType === 'odd') return numberParity(n) === betType;
+    if (betType === 'number') return n === selectedNumber;
+    return false;
+  }
+
+  function baseNumber(){
+    if (houseEdgeOff) return Math.floor(Math.random() * 36) + 1; // no zero pocket, true 50/50 red/black
+    return Math.floor(Math.random() * 37); // 0-36
+  }
+
+  function weightedNumber(betType){
+    // luck multiplier increases the chance the outcome matches the player's bet
+    if (luckMultiplier <= 1) return baseNumber();
+    const favorChance = Math.min(0.9, (luckMultiplier - 1) * 0.35 + (1/37));
+    if (Math.random() < favorChance){
+      const candidates = [];
+      for (let n = 0; n <= 36; n++){
+        if (betMatches(n, betType)) candidates.push(n);
+      }
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+    return baseNumber();
+  }
+
+  // Real European roulette wheel sequence (clockwise from the pointer at top)
+  const WHEEL_ORDER = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+  const POCKET_ANGLE = 360 / WHEEL_ORDER.length;
+
+  function buildWheelVisual(){
+    const stops = [];
+    WHEEL_ORDER.forEach((num, i)=>{
+      const color = num === 0 ? 'var(--win)' : (RED_NUMBERS.includes(num) ? 'var(--loss)' : '#1a1a1a');
+      const start = (i * POCKET_ANGLE).toFixed(3);
+      const end = ((i + 1) * POCKET_ANGLE).toFixed(3);
+      stops.push(`${color} ${start}deg ${end}deg`);
+    });
+    wheel.style.background = `conic-gradient(${stops.join(', ')})`;
+
+    // Number labels sit at a fixed fraction of the wheel's *actual rendered*
+    // radius rather than a hardcoded pixel offset, so the layout still lines
+    // up correctly at the smaller wheel size used on phones (see the
+    // max-width:560px media query).
+    const renderedWidth = wheel.getBoundingClientRect().width || 260;
+    const labelDistance = (renderedWidth / 2) * 0.83;
+
+    WHEEL_ORDER.forEach((num, i)=>{
+      const center = i * POCKET_ANGLE + POCKET_ANGLE / 2;
+      const label = document.createElement('div');
+      label.className = 'wheel-number';
+      label.textContent = num;
+      label.style.transform = `rotate(${center}deg) translate(0, -${labelDistance}px) rotate(${-center}deg)`;
+      wheel.appendChild(label);
+    });
+  }
+  buildWheelVisual();
+
+  function landingRotation(number){
+    // The pointer is fixed at the top (0deg). The wheel's own sectors are laid
+    // out clockwise starting at 0deg, so rotating the wheel by R clockwise moves
+    // a sector originally at local angle "center" to absolute angle (center + R).
+    // To land that sector under the pointer (absolute 0deg) we need
+    // R ≡ -center (mod 360), i.e. R = 360 - center. The previous version
+    // returned "center" directly, which pointed at the wrong pocket entirely
+    // (the one diametrically-ish opposite), causing the wheel to visually land
+    // on a different number/color than the one announced in the result text.
+    const idx = WHEEL_ORDER.indexOf(number);
+    const center = idx * POCKET_ANGLE + POCKET_ANGLE / 2;
+    return (360 - center) % 360;
+  }
+
+  spinBtn.addEventListener('click', ()=>{
+    if (spinning) return;
+    const stakeInput = document.getElementById('rouletteStake');
+    const stake = Math.floor(Number(stakeInput.value));
+    if (!stake || stake <= 0){
+      rouletteResult.textContent = 'Enter a stake first.';
+      rouletteResult.className = 'result-line loss';
+      return;
+    }
+    if (stake > balance){
+      rouletteResult.textContent = "That's more chips than you have.";
+      rouletteResult.className = 'result-line loss';
+      return;
+    }
+
+    spinning = true;
+    spinBtn.disabled = true;
+    balance -= stake;
+    renderBalance();
+    playWhoosh();
+    rouletteResult.textContent = 'Spinning…';
+    rouletteResult.className = 'result-line';
+
+    const outcomeNumber = weightedNumber(selectedColor);
+    const outcomeColor = numberColor(outcomeNumber);
+
+    const target = landingRotation(outcomeNumber);
+    const curMod = ((wheelRotation % 360) + 360) % 360;
+    const delta = ((target - curMod) + 360) % 360;
+    const extraSpins = 5 + Math.floor(Math.random()*3);
+    wheelRotation += extraSpins * 360 + delta;
+    wheel.style.transform = `rotate(${wheelRotation}deg)`;
+
+    setTimeout(()=>{
+      let payout = 0;
+      let won = false;
+      if (betMatches(outcomeNumber, selectedColor)){
+        won = true;
+        if (selectedColor === 'green') payout = stake * 14;
+        else if (selectedColor === 'number') payout = stake * 35;
+        else payout = stake * 2;
+        balance += payout;
+      }
+      renderBalance();
+      const description = `Ball lands on ${outcomeNumber} (${outcomeColor})`;
+      if (won){
+        rouletteResult.textContent = `${description}. You win ${formatMoney(payout)} chips.`;
+        rouletteResult.className = 'result-line win';
+      } else {
+        rouletteResult.textContent = `${description}. House keeps the stake.`;
+        rouletteResult.className = 'result-line loss';
+      }
+      recordRound(stake, payout, { game: 'roulette', detail: (won && outcomeColor === 'green') ? 'rouletteGreen' : undefined });
+      spinning = false;
+      spinBtn.disabled = false;
+    }, 4300);
+  });
+
+  // ---------- SLOTS ----------
+  const symbols = ['🍒','🍇','🔔','💎','7️⃣'];
+  const weights =  [40, 28, 18, 10, 4]; // out of 100, base weighting
+  const reels = [document.getElementById('reel0'), document.getElementById('reel1'), document.getElementById('reel2')];
+  const pullBtn = document.getElementById('pullBtn');
+  const slotResult = document.getElementById('slotResult');
+
+  function pickSymbol(){
+    let w = houseEdgeOff ? [1,1,1,1,1] : weights.slice();
+    if (luckMultiplier > 1){
+      // shift weight toward rarer symbols as luck increases
+      const boost = (luckMultiplier - 1);
+      w = w.map((val, i) => i >= 2 ? val * (1 + boost*0.9) : val * (1 - Math.min(0.5, boost*0.15)));
+    }
+    const total = w.reduce((a,b)=>a+b,0);
+    let r = Math.random()*total;
+    for (let i=0;i<w.length;i++){
+      if (r < w[i]) return symbols[i];
+      r -= w[i];
+    }
+    return symbols[0];
+  }
+
+  function payoutMultiplier(a,b,c){
+    if (a===b && b===c){
+      if (a==='7️⃣') return 40;
+      if (a==='💎') return 20;
+      if (a==='🔔') return 10;
+      if (a==='🍇') return 6;
+      if (a==='🍒') return 4;
+    }
+    if (a===b || b===c || a===c) return 1;
+    return 0;
+  }
+
+  pullBtn.addEventListener('click', ()=>{
+    if (pulling) return;
+    const stakeInput = document.getElementById('slotStake');
+    const stake = Math.floor(Number(stakeInput.value));
+    if (!stake || stake <= 0){
+      slotResult.textContent = 'Enter a stake first.';
+      slotResult.className = 'result-line loss';
+      return;
+    }
+    if (stake > balance){
+      slotResult.textContent = "That's more chips than you have.";
+      slotResult.className = 'result-line loss';
+      return;
+    }
+
+    pulling = true;
+    pullBtn.disabled = true;
+    balance -= stake;
+    renderBalance();
+    playWhoosh();
+    slotResult.textContent = 'Reels turning…';
+    slotResult.className = 'result-line';
+
+    reels.forEach(r => r.classList.add('spinning'));
+
+    const finalSymbols = [pickSymbol(), pickSymbol(), pickSymbol()];
+
+    reels.forEach((reelEl, idx)=>{
+      let ticks = 0;
+      const maxTicks = 10 + idx*6;
+      const interval = setInterval(()=>{
+        reelEl.textContent = symbols[Math.floor(Math.random()*symbols.length)];
+        ticks++;
+        if (ticks >= maxTicks){
+          clearInterval(interval);
+          reelEl.textContent = finalSymbols[idx];
+          reelEl.classList.remove('spinning');
+          if (idx === reels.length - 1){
+            finishPull(stake, finalSymbols);
+          }
+        }
+      }, 60);
+    });
+  });
+
+  function finishPull(stake, finalSymbols){
+    const mult = payoutMultiplier(...finalSymbols);
+    let payout = 0;
+    if (mult > 0){
+      payout = stake * mult;
+      balance += payout;
+      renderBalance();
+      slotResult.textContent = `${finalSymbols.join(' ')} — pays ${mult}×. You win ${formatMoney(payout)} chips.`;
+      slotResult.className = 'result-line win';
+    } else {
+      renderBalance();
+      slotResult.textContent = `${finalSymbols.join(' ')} — no match. House keeps the stake.`;
+      slotResult.className = 'result-line loss';
+    }
+    recordRound(stake, payout, { game: 'slots' });
+    pulling = false;
+    pullBtn.disabled = false;
+  }
+
+  // ---------- BLACKJACK ----------
+  const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+  const SUITS = [{s:'♠',red:false},{s:'♣',red:false},{s:'♥',red:true},{s:'♦',red:true}];
+  let shoe = [];
+  let dealerHand = [];
+  let playerHands = [];     // [{ cards, stake, done, doubled, isSplit, splitAcesLock, result, cls }]
+  let activeHandIndex = 0;
+  let blackjackStakeAmt = 0; // base stake of the original (pre-split) hand
+  let blackjackInRound = false;
+  let insuranceBet = 0;
+
+  const dealerCardsEl = document.getElementById('dealerCards');
+  const dealerTotalEl = document.getElementById('dealerTotal');
+  const playerHandsRow = document.getElementById('playerHandsRow');
+  const dealBtn = document.getElementById('dealBtn');
+  const blackjackActions = document.getElementById('blackjackActions');
+  const hitBtn = document.getElementById('hitBtn');
+  const standBtn = document.getElementById('standBtn');
+  const doubleBtn = document.getElementById('doubleBtn');
+  const splitBtn = document.getElementById('splitBtn');
+  const blackjackResult = document.getElementById('blackjackResult');
+  const insuranceRow = document.getElementById('insuranceRow');
+  const insuranceYesBtn = document.getElementById('insuranceYesBtn');
+  const insuranceNoBtn = document.getElementById('insuranceNoBtn');
+
+  function buildShoe(){
+    let boostedCount = 4;
+    if (luckMultiplier > 1){
+      boostedCount = Math.round(4 * (1 + (luckMultiplier - 1) * 1.2));
+    }
+    const newShoe = [];
+    RANKS.forEach(rank=>{
+      const isBoosted = (rank === '10' || rank === 'J' || rank === 'Q' || rank === 'K' || rank === 'A');
+      const count = isBoosted ? boostedCount : 4;
+      for (let i=0;i<count;i++){
+        const suit = SUITS[Math.floor(Math.random()*SUITS.length)];
+        newShoe.push({rank, suit: suit.s, red: suit.red});
+      }
+    });
+    for (let i=newShoe.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [newShoe[i], newShoe[j]] = [newShoe[j], newShoe[i]];
+    }
+    return newShoe;
+  }
+
+  function drawCard(){
+    if (shoe.length < 4) shoe = buildShoe();
+    return shoe.pop();
+  }
+
+  function cardValue(card){
+    if (card.rank === 'A') return 11;
+    if (card.rank === 'J' || card.rank === 'Q' || card.rank === 'K') return 10;
+    return parseInt(card.rank, 10);
+  }
+
+  function handValue(cards){
+    let total = cards.reduce((sum,c)=>sum+cardValue(c),0);
+    let aces = cards.filter(c=>c.rank==='A').length;
+    while (total > 21 && aces > 0){ total -= 10; aces--; }
+    return total;
+  }
+
+  function renderCard(card, faceDown){
+    const div = document.createElement('div');
+    div.className = 'card' + (card.red ? ' red-suit' : '') + (faceDown ? ' face-down' : '');
+    if (!faceDown){
+      div.innerHTML =
+        `<div class="card-corner top">${card.rank}<span>${card.suit}</span></div>` +
+        `<div class="card-center">${card.suit}</div>` +
+        `<div class="card-corner bottom">${card.rank}<span>${card.suit}</span></div>`;
+    }
+    return div;
+  }
+
+  function renderHands(revealDealer){
+    dealerCardsEl.innerHTML = '';
+    dealerHand.forEach((card, idx)=>{
+      dealerCardsEl.appendChild(renderCard(card, idx === 1 && !revealDealer));
+    });
+    dealerTotalEl.textContent = revealDealer ? `Total: ${handValue(dealerHand)}` : `Showing: ${cardValue(dealerHand[0])}`;
+
+    playerHandsRow.innerHTML = '';
+    playerHands.forEach((hand, i)=>{
+      const block = document.createElement('div');
+      block.className = 'hand-block' + (playerHands.length > 1 ? ' split-hand' : '');
+      if (playerHands.length > 1 && i === activeHandIndex && !hand.done) block.classList.add('active');
+      if (hand.done) block.classList.add('finished');
+
+      const label = document.createElement('div');
+      label.className = 'hand-label';
+      label.textContent = playerHands.length > 1 ? `Hand ${i + 1}${hand.doubled ? ' (doubled)' : ''}` : 'You';
+      block.appendChild(label);
+
+      const row = document.createElement('div');
+      row.className = 'card-row';
+      hand.cards.forEach(card => row.appendChild(renderCard(card, false)));
+      block.appendChild(row);
+
+      const total = document.createElement('div');
+      total.className = 'hand-total';
+      total.textContent = `Total: ${handValue(hand.cards)}`;
+      block.appendChild(total);
+
+      if (hand.result){
+        const tag = document.createElement('div');
+        tag.className = 'hand-result-tag ' + (hand.cls || '');
+        tag.textContent = hand.result;
+        block.appendChild(tag);
+      }
+
+      playerHandsRow.appendChild(block);
+    });
+  }
+
+  function currentHand(){ return playerHands[activeHandIndex]; }
+
+  function canDouble(hand){
+    return hand.cards.length === 2 && !hand.splitAcesLock && balance >= hand.stake;
+  }
+
+  function canSplit(hand){
+    return hand.cards.length === 2 &&
+      hand.cards[0].rank === hand.cards[1].rank &&
+      playerHands.length < 2 &&
+      balance >= hand.stake;
+  }
+
+  function updateActionButtons(){
+    const hand = currentHand();
+    doubleBtn.style.display = canDouble(hand) ? 'inline-block' : 'none';
+    splitBtn.style.display = canSplit(hand) ? 'inline-block' : 'none';
+  }
+
+  function endRound(message, cls){
+    blackjackResult.textContent = message;
+    blackjackResult.className = 'result-line ' + cls;
+    blackjackActions.style.display = 'none';
+    insuranceRow.style.display = 'none';
+    dealBtn.disabled = false;
+    blackjackInRound = false;
+  }
+
+  // Moves on to the next unfinished hand, or starts the dealer's turn once
+  // every hand is done (busted, stood, or completed a double).
+  function advanceOrDealerTurn(){
+    let next = activeHandIndex + 1;
+    while (next < playerHands.length && playerHands[next].done) next++;
+    if (next < playerHands.length){
+      activeHandIndex = next;
+      renderHands(false);
+      updateActionButtons();
+      return;
+    }
+    dealerTurn();
+  }
+
+  function dealerTurn(){
+    blackjackActions.style.display = 'none';
+    // If every hand already busted, no need for the dealer to draw further —
+    // still reveal the hole card for transparency.
+    const anyStillIn = playerHands.some(h => handValue(h.cards) <= 21);
+    renderHands(true);
+    if (!anyStillIn){
+      resolveAllHands();
+      return;
+    }
+
+    function dealerStep(){
+      const dealerTotal = handValue(dealerHand);
+      if (dealerTotal < 17){
+        dealerHand.push(drawCard());
+        playFlip();
+        renderHands(true);
+        setTimeout(dealerStep, 500);
+        return;
+      }
+      resolveAllHands();
+    }
+    setTimeout(dealerStep, 400);
+  }
+
+  function resolveAllHands(){
+    const dealerTotal = handValue(dealerHand);
+    const dealerBust = dealerTotal > 21;
+    let totalStaked = 0;
+    let totalPayout = 0;
+    const parts = [];
+
+    playerHands.forEach((hand, i)=>{
+      const playerTotal = handValue(hand.cards);
+      totalStaked += hand.stake;
+      const label = playerHands.length > 1 ? `Hand ${i + 1}: ` : '';
+
+      if (playerTotal > 21){
+        hand.result = 'Bust'; hand.cls = 'loss';
+        parts.push(`${label}bust at ${playerTotal}`);
+      } else if (dealerBust){
+        const payout = hand.stake * 2;
+        totalPayout += payout;
+        hand.result = `Win ${formatMoney(payout)}`; hand.cls = 'win';
+        parts.push(`${label}win ${formatMoney(payout)} (dealer bust)`);
+      } else if (playerTotal > dealerTotal){
+        const payout = hand.stake * 2;
+        totalPayout += payout;
+        hand.result = `Win ${formatMoney(payout)}`; hand.cls = 'win';
+        parts.push(`${label}${playerTotal} beats ${dealerTotal}, win ${formatMoney(payout)}`);
+      } else if (playerTotal === dealerTotal){
+        totalPayout += hand.stake;
+        hand.result = 'Push'; hand.cls = '';
+        parts.push(`${label}push at ${playerTotal}`);
+      } else {
+        hand.result = 'Loss'; hand.cls = 'loss';
+        parts.push(`${label}${playerTotal} loses to ${dealerTotal}`);
+      }
+    });
+
+    balance += totalPayout;
+    renderBalance();
+    renderHands(true);
+
+    playerHands.forEach(hand => {
+      recordRound(hand.stake, hand.cls === 'win' ? hand.stake * 2 : (hand.cls === '' ? hand.stake : 0), { game: 'blackjack' });
+    });
+
+    const overallCls = totalPayout > totalStaked ? 'win' : (totalPayout === totalStaked ? '' : 'loss');
+    endRound(parts.join(' · ') + (dealerBust ? ` — dealer busts at ${dealerTotal}.` : ` — dealer has ${dealerTotal}.`), overallCls);
+  }
+
+  function startHandActions(){
+    blackjackActions.style.display = 'flex';
+    updateActionButtons();
+  }
+
+  function checkNaturalsAndStart(){
+    const hand = playerHands[0];
+    const playerBJ = hand.cards.length === 2 && handValue(hand.cards) === 21;
+    const dealerBJ = handValue(dealerHand) === 21;
+
+    if (playerBJ || dealerBJ){
+      renderHands(true);
+      if (playerBJ && dealerBJ){
+        balance += hand.stake;
+        renderBalance();
+        recordRound(hand.stake, hand.stake, { game: 'blackjack' });
+        endRound('Both hold blackjack. Push — your stake is returned.', '');
+      } else if (playerBJ){
+        const payout = Math.round(hand.stake * 2.5);
+        balance += payout;
+        renderBalance();
+        recordRound(hand.stake, payout, { game: 'blackjack', detail: 'naturalBlackjack' });
+        endRound(`Blackjack! You win ${formatMoney(payout)} chips.`, 'win');
+      } else {
+        recordRound(hand.stake, 0, { game: 'blackjack' });
+        endRound('Dealer holds blackjack. House keeps the stake.', 'loss');
+      }
+      return;
+    }
+
+    startHandActions();
+  }
+
+  function offerInsurance(){
+    insuranceRow.style.display = 'flex';
+    blackjackActions.style.display = 'none';
+    const insuranceCost = Math.floor(playerHands[0].stake / 2);
+    insuranceYesBtn.disabled = insuranceCost > balance || insuranceCost <= 0;
+
+    function settle(tookInsurance){
+      insuranceRow.style.display = 'none';
+      insuranceBet = 0;
+      if (tookInsurance){
+        insuranceBet = insuranceCost;
+        balance -= insuranceCost;
+        renderBalance();
+      }
+
+      const dealerBJ = handValue(dealerHand) === 21;
+      if (dealerBJ && insuranceBet > 0){
+        const insurancePayout = insuranceBet * 3; // stake back + 2:1 win
+        balance += insurancePayout;
+        renderBalance();
+      }
+
+      if (dealerBJ){
+        renderHands(true);
+        const hand = playerHands[0];
+        const playerBJ = handValue(hand.cards) === 21;
+        const insuranceNote = insuranceBet > 0 ? ' Insurance pays out.' : '';
+        if (playerBJ){
+          balance += hand.stake;
+          renderBalance();
+          recordRound(hand.stake, hand.stake, { game: 'blackjack' });
+          endRound('Both hold blackjack. Push on your main bet.' + insuranceNote, '');
+        } else {
+          recordRound(hand.stake, 0, { game: 'blackjack' });
+          endRound('Dealer holds blackjack.' + insuranceNote, insuranceBet > 0 ? '' : 'loss');
+        }
+        return;
+      }
+
+      // No dealer blackjack — insurance (if taken) is lost, play continues.
+      checkNaturalsAndStart();
+    }
+
+    insuranceYesBtn.onclick = () => settle(true);
+    insuranceNoBtn.onclick = () => settle(false);
+  }
+
+  dealBtn.addEventListener('click', ()=>{
+    if (blackjackInRound) return;
+    const stakeInput = document.getElementById('blackjackStake');
+    const stake = Math.floor(Number(stakeInput.value));
+    if (!stake || stake <= 0){
+      blackjackResult.textContent = 'Enter a stake first.';
+      blackjackResult.className = 'result-line loss';
+      return;
+    }
+    if (stake > balance){
+      blackjackResult.textContent = "That's more chips than you have.";
+      blackjackResult.className = 'result-line loss';
+      return;
+    }
+
+    blackjackStakeAmt = stake;
+    balance -= stake;
+    renderBalance();
+    blackjackInRound = true;
+    dealBtn.disabled = true;
+    blackjackResult.textContent = '';
+    blackjackResult.className = 'result-line';
+
+    if (shoe.length < 15) shoe = buildShoe();
+    playerHands = [{ cards: [drawCard(), drawCard()], stake, done: false, doubled: false, isSplit: false, splitAcesLock: false, result: null, cls: '' }];
+    activeHandIndex = 0;
+    dealerHand = [drawCard(), drawCard()];
+    renderHands(false);
+    playFlip();
+
+    if (dealerHand[0].rank === 'A'){
+      offerInsurance();
+      return;
+    }
+
+    checkNaturalsAndStart();
+  });
+
+  hitBtn.addEventListener('click', ()=>{
+    if (!blackjackInRound) return;
+    const hand = currentHand();
+    hand.cards.push(drawCard());
+    playFlip();
+    const total = handValue(hand.cards);
+    renderHands(false);
+    if (total >= 21){
+      hand.done = true;
+      advanceOrDealerTurn();
+    } else {
+      updateActionButtons();
+    }
+  });
+
+  standBtn.addEventListener('click', ()=>{
+    if (!blackjackInRound) return;
+    currentHand().done = true;
+    advanceOrDealerTurn();
+  });
+
+  doubleBtn.addEventListener('click', ()=>{
+    if (!blackjackInRound) return;
+    const hand = currentHand();
+    if (!canDouble(hand)) return;
+    balance -= hand.stake;
+    hand.stake *= 2;
+    hand.doubled = true;
+    renderBalance();
+    hand.cards.push(drawCard());
+    playFlip();
+    hand.done = true;
+    renderHands(false);
+    advanceOrDealerTurn();
+  });
+
+  splitBtn.addEventListener('click', ()=>{
+    if (!blackjackInRound) return;
+    const hand = currentHand();
+    if (!canSplit(hand)) return;
+
+    const isAceSplit = hand.cards[0].rank === 'A';
+    const secondCard = hand.cards.pop();
+    balance -= hand.stake;
+    renderBalance();
+
+    const newHand = {
+      cards: [secondCard, drawCard()],
+      stake: hand.stake,
+      done: false,
+      doubled: false,
+      isSplit: true,
+      splitAcesLock: isAceSplit,
+      result: null,
+      cls: ''
+    };
+    hand.cards.push(drawCard());
+    hand.isSplit = true;
+    hand.splitAcesLock = isAceSplit;
+
+    playerHands.splice(activeHandIndex + 1, 0, newHand);
+    playFlip();
+    renderHands(false);
+
+    // Split aces conventionally get exactly one card each and can't be
+    // hit further — resolve that immediately by marking both hands done
+    // once each has its second card, at which point advanceOrDealerTurn
+    // moves things along on its own.
+    if (isAceSplit){
+      hand.done = true;
+      newHand.done = true;
+      advanceOrDealerTurn();
+      return;
+    }
+
+    updateActionButtons();
+  });
+
+  // ---------- DICE ----------
+  const diceFaces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+  const die0 = document.getElementById('die0');
+  const die1 = document.getElementById('die1');
+  const diceTotal = document.getElementById('diceTotal');
+  const diceResult = document.getElementById('diceResult');
+  const rollBtn = document.getElementById('rollBtn');
+  let selectedDiceBet = 'under';
+  let rolling = false;
+
+  document.querySelectorAll('[data-dice-select]').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      document.querySelectorAll('[data-dice-select]').forEach(c=>c.classList.remove('selected'));
+      chip.classList.add('selected');
+      selectedDiceBet = chip.dataset.diceSelect;
+    });
+  });
+  document.querySelector('[data-dice-select="under"]').classList.add('selected');
+
+  function diceBetMatches(total, betType){
+    if (betType === 'seven') return total === 7;
+    if (betType === 'under') return total < 7;
+    if (betType === 'over') return total > 7;
+    return false;
+  }
+
+  function rollDicePair(betType){
+    if (luckMultiplier > 1){
+      const favorChance = Math.min(0.85, (luckMultiplier - 1) * 0.3 + 0.1);
+      if (Math.random() < favorChance){
+        // pick a valid pair matching the bet
+        let a, b, total;
+        do {
+          a = Math.floor(Math.random()*6)+1;
+          b = Math.floor(Math.random()*6)+1;
+          total = a + b;
+        } while (!diceBetMatches(total, betType));
+        return [a,b];
+      }
+    }
+    return [Math.floor(Math.random()*6)+1, Math.floor(Math.random()*6)+1];
+  }
+
+  rollBtn.addEventListener('click', ()=>{
+    if (rolling) return;
+    const stakeInput = document.getElementById('diceStake');
+    const stake = Math.floor(Number(stakeInput.value));
+    if (!stake || stake <= 0){
+      diceResult.textContent = 'Enter a stake first.';
+      diceResult.className = 'result-line loss';
+      return;
+    }
+    if (stake > balance){
+      diceResult.textContent = "That's more chips than you have.";
+      diceResult.className = 'result-line loss';
+      return;
+    }
+
+    rolling = true;
+    rollBtn.disabled = true;
+    balance -= stake;
+    renderBalance();
+    playWhoosh();
+    diceResult.textContent = 'Rolling…';
+    diceResult.className = 'result-line';
+
+    let ticks = 0;
+    const interval = setInterval(()=>{
+      die0.textContent = diceFaces[Math.floor(Math.random()*6)];
+      die1.textContent = diceFaces[Math.floor(Math.random()*6)];
+      ticks++;
+      if (ticks >= 12){
+        clearInterval(interval);
+        const [a,b] = rollDicePair(selectedDiceBet);
+        die0.textContent = diceFaces[a-1];
+        die1.textContent = diceFaces[b-1];
+        const total = a + b;
+        diceTotal.textContent = `Total: ${total}`;
+
+        const underOverPayout = houseEdgeOff ? 2.4 : 2;
+        const sevenPayout = houseEdgeOff ? 6 : 5;
+        let payout = 0;
+        const won = diceBetMatches(total, selectedDiceBet);
+        if (won){
+          payout = selectedDiceBet === 'seven' ? Math.round(stake * sevenPayout) : Math.round(stake * underOverPayout);
+          balance += payout;
+        }
+        renderBalance();
+        if (won){
+          diceResult.textContent = `Rolled ${total}. You win ${formatMoney(payout)} chips.`;
+          diceResult.className = 'result-line win';
+        } else {
+          diceResult.textContent = `Rolled ${total}. House keeps the stake.`;
+          diceResult.className = 'result-line loss';
+        }
+        recordRound(stake, payout, { game: 'dice', detail: (a === b ? 'diceDoubles' : undefined) });
+        rolling = false;
+        rollBtn.disabled = false;
+      }
+    }, 80);
+  });
+
+  // ---------- HI-LO ----------
+  const HILO_RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+  const HILO_ORDER = {2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
+  let hiloShoe = [];
+  let hiloCurrentCard = null;
+  let hiloStake = 0;
+  let hiloMultiplierValue = 1;
+  let hiloStreakCount = 0;
+  let hiloActive = false;
+
+  const hiloCardsEl = document.getElementById('hiloCards');
+  const hiloStreakEl = document.getElementById('hiloStreak');
+  const hiloMultiplierEl = document.getElementById('hiloMultiplier');
+  const hiloStartBtn = document.getElementById('hiloStartBtn');
+  const hiloActionsEl = document.getElementById('hiloActions');
+  const hiloHigherBtn = document.getElementById('hiloHigherBtn');
+  const hiloLowerBtn = document.getElementById('hiloLowerBtn');
+  const hiloCashoutBtn = document.getElementById('hiloCashoutBtn');
+  const hiloResult = document.getElementById('hiloResult');
+
+  function buildHiloShoe(){
+    const newShoe = [];
+    HILO_RANKS.forEach(rank=>{
+      SUITS.forEach(suit=>{
+        newShoe.push({rank, suit: suit.s, red: suit.red});
+      });
+    });
+    for (let i=newShoe.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [newShoe[i], newShoe[j]] = [newShoe[j], newShoe[i]];
+    }
+    return newShoe;
+  }
+  function drawHiloCard(){
+    if (hiloShoe.length < 2) hiloShoe = buildHiloShoe();
+    return hiloShoe.pop();
+  }
+  function drawHiloCardBiased(wantHigher, referenceValue){
+    // With luck, bias the next card to favor a correct guess
+    if (luckMultiplier > 1 && hiloShoe.length > 6){
+      const favorChance = Math.min(0.85, (luckMultiplier - 1) * 0.3 + 0.1);
+      if (Math.random() < favorChance){
+        const matchIdx = hiloShoe.findIndex(c=>{
+          const v = HILO_ORDER[c.rank];
+          return wantHigher ? v > referenceValue : v < referenceValue;
+        });
+        if (matchIdx >= 0) return hiloShoe.splice(matchIdx,1)[0];
+      }
+    }
+    return drawHiloCard();
+  }
+
+  function renderHiloCard(card){
+    hiloCardsEl.innerHTML = '';
+    hiloCardsEl.appendChild(renderCard(card, false));
+    playFlip();
+  }
+
+  hiloStartBtn.addEventListener('click', ()=>{
+    if (hiloActive) return;
+    const stakeInput = document.getElementById('hiloStake');
+    const stake = Math.floor(Number(stakeInput.value));
+    if (!stake || stake <= 0){
+      hiloResult.textContent = 'Enter a stake first.';
+      hiloResult.className = 'result-line loss';
+      return;
+    }
+    if (stake > balance){
+      hiloResult.textContent = "That's more chips than you have.";
+      hiloResult.className = 'result-line loss';
+      return;
+    }
+
+    hiloStake = stake;
+    balance -= stake;
+    renderBalance();
+    hiloShoe = buildHiloShoe();
+    hiloCurrentCard = drawHiloCard();
+    renderHiloCard(hiloCurrentCard);
+    hiloMultiplierValue = 1;
+    hiloStreakCount = 0;
+    hiloActive = true;
+    hiloStreakEl.textContent = 'Streak: 0';
+    hiloMultiplierEl.textContent = 'Payout so far: 1.00×';
+    hiloResult.textContent = 'Higher or lower than this card?';
+    hiloResult.className = 'result-line';
+    hiloStartBtn.disabled = true;
+    hiloActionsEl.style.display = 'flex';
+    hiloCashoutBtn.disabled = true;
+  });
+
+  function hiloGuess(wantHigher){
+    if (!hiloActive) return;
+    const refValue = HILO_ORDER[hiloCurrentCard.rank];
+    const nextCard = drawHiloCardBiased(wantHigher, refValue);
+    const nextValue = HILO_ORDER[nextCard.rank];
+    renderHiloCard(nextCard);
+
+    if (nextValue === refValue){
+      // push - redraw comparison, no change
+      hiloCurrentCard = nextCard;
+      hiloResult.textContent = `Tied at ${nextCard.rank} — no change, guess again.`;
+      hiloResult.className = 'result-line';
+      return;
+    }
+
+    const correct = wantHigher ? nextValue > refValue : nextValue < refValue;
+    hiloCurrentCard = nextCard;
+
+    if (correct){
+      hiloStreakCount += 1;
+      hiloMultiplierValue *= 1.9;
+      hiloStreakEl.textContent = `Streak: ${hiloStreakCount}`;
+      hiloMultiplierEl.textContent = `Payout so far: ${hiloMultiplierValue.toFixed(2)}×`;
+      hiloResult.textContent = 'Correct! Keep going or cash out.';
+      hiloResult.className = 'result-line win';
+      hiloCashoutBtn.disabled = false;
+    } else {
+      hiloActive = false;
+      hiloActionsEl.style.display = 'none';
+      hiloStartBtn.disabled = false;
+      hiloResult.textContent = `Wrong guess. Lost the run. House keeps the stake.`;
+      hiloResult.className = 'result-line loss';
+      recordRound(hiloStake, 0, { game: 'hilo' });
+    }
+  }
+
+  hiloHigherBtn.addEventListener('click', ()=>hiloGuess(true));
+  hiloLowerBtn.addEventListener('click', ()=>hiloGuess(false));
+
+  hiloCashoutBtn.addEventListener('click', ()=>{
+    if (!hiloActive || hiloStreakCount === 0) return;
+    const payout = Math.round(hiloStake * hiloMultiplierValue);
+    balance += payout;
+    renderBalance();
+    hiloResult.textContent = `Cashed out at ${hiloMultiplierValue.toFixed(2)}×. You win ${formatMoney(payout)} chips.`;
+    hiloResult.className = 'result-line win';
+    recordRound(hiloStake, payout, { game: 'hilo', detail: (hiloStreakCount >= 5 ? 'hiloStreak5' : undefined) });
+    hiloActive = false;
+    hiloActionsEl.style.display = 'none';
+    hiloStartBtn.disabled = false;
+  });
+
+  // ---------- PLINKO ----------
+  const PLINKO_ROWS = 8;
+  const PLINKO_PAYOUTS = [5.6, 2.1, 1.1, 1, 0.5, 1, 1.1, 2.1, 5.6]; // 9 slots, ~1% house edge from binomial odds
+  const BOARD_W = 320, BOARD_H = 300, SLOTS_H = 34;
+  const PEG_SPACING_X = 30, ROW_SPACING_Y = 28.75, TOP_PAD = 16;
+  const CENTER_X = BOARD_W / 2;
+
+  const plinkoBoard = document.getElementById('plinkoBoard');
+  const plinkoSlotsEl = document.getElementById('plinkoSlots');
+  const dropBtn = document.getElementById('dropBtn');
+  const plinkoResult = document.getElementById('plinkoResult');
+  let plinkoDropping = false;
+  let plinkoBall = null;
+
+  function buildPlinkoBoard(){
+    // pegs
+    for (let r = 0; r < PLINKO_ROWS; r++){
+      const pegCount = r + 1;
+      const y = TOP_PAD + r * ROW_SPACING_Y;
+      for (let j = 0; j < pegCount; j++){
+        const x = CENTER_X + (j - r / 2) * PEG_SPACING_X;
+        const peg = document.createElement('div');
+        peg.className = 'plinko-peg';
+        peg.style.left = x + 'px';
+        peg.style.top = y + 'px';
+        plinkoBoard.appendChild(peg);
+      }
+    }
+    // slots
+    PLINKO_PAYOUTS.forEach(mult=>{
+      const slot = document.createElement('div');
+      slot.className = 'plinko-slot';
+      slot.textContent = mult + '×';
+      plinkoSlotsEl.appendChild(slot);
+    });
+  }
+  buildPlinkoBoard();
+
+  function generateBouncePath(){
+    const path = [];
+    if (luckMultiplier > 1){
+      const biasRight = Math.random() < 0.5;
+      const biasStrength = Math.min(0.35, (luckMultiplier - 1) * 0.12);
+      const p = biasRight ? 0.5 + biasStrength : 0.5 - biasStrength;
+      for (let i = 0; i < PLINKO_ROWS; i++) path.push(Math.random() < p ? 1 : 0);
+    } else {
+      for (let i = 0; i < PLINKO_ROWS; i++) path.push(Math.random() < 0.5 ? 1 : 0);
+    }
+    return path;
+  }
+
+  dropBtn.addEventListener('click', ()=>{
+    if (plinkoDropping) return;
+    const stakeInput = document.getElementById('plinkoStake');
+    const stake = Math.floor(Number(stakeInput.value));
+    if (!stake || stake <= 0){
+      plinkoResult.textContent = 'Enter a stake first.';
+      plinkoResult.className = 'result-line loss';
+      return;
+    }
+    if (stake > balance){
+      plinkoResult.textContent = "That's more chips than you have.";
+      plinkoResult.className = 'result-line loss';
+      return;
+    }
+
+    plinkoDropping = true;
+    dropBtn.disabled = true;
+    balance -= stake;
+    renderBalance();
+    playWhoosh();
+    plinkoResult.textContent = 'Dropping…';
+    plinkoResult.className = 'result-line';
+
+    document.querySelectorAll('.plinko-slot').forEach(s=>s.classList.remove('hit'));
+
+    if (plinkoBall) plinkoBall.remove();
+    plinkoBall = document.createElement('div');
+    plinkoBall.className = 'plinko-ball';
+    plinkoBall.style.left = CENTER_X + 'px';
+    plinkoBall.style.top = '0px';
+    plinkoBoard.appendChild(plinkoBall);
+
+    const path = generateBouncePath();
+    let offset = 0; // in half-spacing units
+    let step = 0;
+
+    function nextStep(){
+      if (step < PLINKO_ROWS){
+        const y = TOP_PAD + step * ROW_SPACING_Y;
+        const x = CENTER_X + offset * (PEG_SPACING_X / 2);
+        plinkoBall.style.left = x + 'px';
+        plinkoBall.style.top = y + 'px';
+        offset += path[step] ? 1 : -1;
+        step++;
+        setTimeout(nextStep, 170);
+      } else {
+        const slotIndex = path.reduce((a,b)=>a+b, 0);
+        const slotWidth = BOARD_W / PLINKO_PAYOUTS.length;
+        const finalX = (slotIndex + 0.5) * slotWidth;
+        const finalY = BOARD_H - SLOTS_H / 2;
+        plinkoBall.style.left = finalX + 'px';
+        plinkoBall.style.top = finalY + 'px';
+        setTimeout(()=>resolvePlinko(slotIndex, stake), 200);
+      }
+    }
+    nextStep();
+  });
+
+  function resolvePlinko(slotIndex, stake){
+    const mult = PLINKO_PAYOUTS[slotIndex];
+    const payout = Math.round(stake * mult);
+    balance += payout;
+    renderBalance();
+
+    const slots = document.querySelectorAll('.plinko-slot');
+    if (slots[slotIndex]) slots[slotIndex].classList.add('hit');
+
+    if (payout > stake){
+      plinkoResult.textContent = `Landed on ${mult}×. You win ${formatMoney(payout)} chips.`;
+      plinkoResult.className = 'result-line win';
+    } else if (payout === stake) {
+      plinkoResult.textContent = `Landed on ${mult}×. Stake returned.`;
+      plinkoResult.className = 'result-line';
+    } else {
+      plinkoResult.textContent = `Landed on ${mult}×. You keep ${formatMoney(payout)} of your stake.`;
+      plinkoResult.className = 'result-line loss';
+    }
+
+    recordRound(stake, payout, { game: 'plinko', detail: (mult === Math.max(...PLINKO_PAYOUTS) ? 'plinkoEdge' : undefined) });
+    plinkoDropping = false;
+    dropBtn.disabled = false;
+  }
+
+  // ---------- BACK OFFICE (mod menu) ----------
+  // Access is gated behind the portal owner's own admin login. The main
+  // portal sets "shelf.gh.token" in localStorage once the owner connects
+  // their GitHub account (⚙, Ctrl+Alt+C) — since this game is served from
+  // the same origin, that same key is visible here, so only the owner's
+  // own browser ever sees the Back Office button at all.
+  const BACKOFFICE_PASSWORD = 'fox1922';
+  const backofficeOverlay = document.getElementById('backofficeOverlay');
+  const passwordOverlay = document.getElementById('passwordOverlay');
+  const passwordInput = document.getElementById('passwordInput');
+  const passwordError = document.getElementById('passwordError');
+  const modAccessBtn = document.getElementById('modAccessBtn');
+
+  function isPortalAdmin(){
+    try { return !!localStorage.getItem('shelf.gh.token'); }
+    catch(e){ return false; }
+  }
+  if (modAccessBtn) modAccessBtn.style.display = isPortalAdmin() ? 'inline-block' : 'none';
+
+  document.getElementById('modAccessBtn').addEventListener('click', ()=>{
+    if (!isPortalAdmin()) return; // safety net
+    passwordInput.value = '';
+    passwordError.innerHTML = '&nbsp;';
+    passwordOverlay.classList.add('open');
+    passwordInput.focus();
+  });
+
+  function attemptPasswordSubmit(){
+    if (passwordInput.value === BACKOFFICE_PASSWORD){
+      passwordOverlay.classList.remove('open');
+      document.getElementById('luckInput').value = luckMultiplier;
+      document.getElementById('houseEdgeToggle').checked = houseEdgeOff;
+      document.getElementById('unlimitedChipsToggle').checked = unlimitedChips;
+      document.getElementById('saveDataStatus').textContent = '';
+      backofficeOverlay.classList.add('open');
+    } else {
+      passwordError.textContent = 'Incorrect password.';
+    }
+  }
+
+  document.getElementById('submitPassword').addEventListener('click', attemptPasswordSubmit);
+  passwordInput.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter') attemptPasswordSubmit();
+  });
+  document.getElementById('cancelPassword').addEventListener('click', ()=>{
+    passwordOverlay.classList.remove('open');
+  });
+  passwordOverlay.addEventListener('click', (e)=>{
+    if (e.target === passwordOverlay) passwordOverlay.classList.remove('open');
+  });
+
+  // ---------- REDEEM CODE (one-time currency codes, WORKER_URL from ../../worker-config.js) ----------
+  const redeemOverlay = document.getElementById('redeemOverlay');
+  const redeemCodeInput = document.getElementById('redeemCodeInput');
+  const redeemError = document.getElementById('redeemError');
+  const redeemSubmitBtn = document.getElementById('redeemSubmitBtn');
+
+  window.openRedeem = function(){
+    redeemCodeInput.value = '';
+    redeemError.innerHTML = '&nbsp;';
+    redeemOverlay.classList.add('open');
+    redeemCodeInput.focus();
+  };
+
+  async function submitRedeemCode(){
+    const code = redeemCodeInput.value.trim().toUpperCase();
+    redeemError.innerHTML = '&nbsp;';
+    if (!code) return;
+
+    if (typeof WORKER_URL === 'undefined' || WORKER_URL.includes('REPLACE-ME')){
+      redeemError.textContent = 'Codes are not set up on this site yet.';
+      return;
+    }
+
+    redeemSubmitBtn.disabled = true;
+    try {
+      const res = await fetch(`${WORKER_URL}/codes/redeem`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, game: 'gilded-fox' })
+      });
+      const data = await res.json();
+      if (!res.ok){
+        redeemError.textContent = data.error === 'already used' ? 'That code has already been used.'
+          : data.error === 'wrong game' ? "That code isn't for this game."
+          : 'Invalid code.';
+        return;
+      }
+      balance += data.amount;
+      renderBalance();
+      saveGame();
+      redeemOverlay.classList.remove('open');
+    } catch (e){
+      redeemError.textContent = 'Could not reach the server — try again in a bit.';
+    } finally {
+      redeemSubmitBtn.disabled = false;
+    }
+  }
+
+  redeemSubmitBtn.addEventListener('click', submitRedeemCode);
+  redeemCodeInput.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter') submitRedeemCode();
+  });
+  document.getElementById('cancelRedeem').addEventListener('click', ()=>{
+    redeemOverlay.classList.remove('open');
+  });
+  redeemOverlay.addEventListener('click', (e)=>{
+    if (e.target === redeemOverlay) redeemOverlay.classList.remove('open');
+  });
+
+  document.getElementById('closeBackoffice').addEventListener('click', ()=>{
+    backofficeOverlay.classList.remove('open');
+  });
+  backofficeOverlay.addEventListener('click', (e)=>{
+    if (e.target === backofficeOverlay) backofficeOverlay.classList.remove('open');
+  });
+
+  document.getElementById('applyBackoffice').addEventListener('click', ()=>{
+    const add = Math.floor(Number(document.getElementById('addAmount').value)) || 0;
+    balance += add;
+
+    const setBalanceRaw = document.getElementById('setBalanceAmount').value;
+    if (setBalanceRaw !== ''){
+      const setTo = Math.floor(Number(setBalanceRaw));
+      if (!isNaN(setTo) && setTo >= 0) balance = setTo;
+    }
+
+    const luckRaw = Number(document.getElementById('luckInput').value);
+    luckMultiplier = Math.min(10, Math.max(1, isNaN(luckRaw) ? 1 : luckRaw));
+
+    houseEdgeOff = document.getElementById('houseEdgeToggle').checked;
+    unlimitedChips = document.getElementById('unlimitedChipsToggle').checked;
+
+    renderBalance();
+    document.getElementById('setBalanceAmount').value = '';
+    backofficeOverlay.classList.remove('open');
+  });
+
+  document.getElementById('forceLuckyRoundBtn').addEventListener('click', ()=>{
+    if (oneShotLuckRestore === null) oneShotLuckRestore = luckMultiplier;
+    luckMultiplier = 10;
+    document.getElementById('luckInput').value = 10;
+    renderBalance();
+    backofficeOverlay.classList.remove('open');
+  });
+
+  document.getElementById('unlockAllAchievementsBtn').addEventListener('click', ()=>{
+    ACHIEVEMENTS.forEach(a => unlockedAchievements.add(a.id));
+    renderStats();
+  });
+
+  document.getElementById('exportSaveBtn').addEventListener('click', ()=>{
+    const payload = {
+      balance,
+      stats,
+      unlocked: Array.from(unlockedAchievements),
+      theme: currentTheme,
+      unlimitedChips
+    };
+    document.getElementById('saveDataBox').value = JSON.stringify(payload, null, 2);
+    const status = document.getElementById('saveDataStatus');
+    status.textContent = 'Copied to the box above — copy it somewhere safe.';
+    status.className = 'result-line win';
+  });
+
+  document.getElementById('importSaveBtn').addEventListener('click', ()=>{
+    const status = document.getElementById('saveDataStatus');
+    try{
+      const data = JSON.parse(document.getElementById('saveDataBox').value);
+      if (typeof data.balance === 'number' && !isNaN(data.balance)) balance = data.balance;
+      if (data.stats && typeof data.stats === 'object') Object.assign(stats, data.stats);
+      if (Array.isArray(data.unlocked)){
+        unlockedAchievements.clear();
+        data.unlocked.forEach(id => unlockedAchievements.add(id));
+      }
+      if (data.theme && typeof data.theme === 'object'){
+        currentTheme = {
+          bg: data.theme.bg || DEFAULT_THEME.bg,
+          text: data.theme.text || DEFAULT_THEME.text,
+          table: data.theme.table || DEFAULT_THEME.table
+        };
+        applyTheme(currentTheme);
+      }
+      if (typeof data.unlimitedChips === 'boolean'){
+        unlimitedChips = data.unlimitedChips;
+        document.getElementById('unlimitedChipsToggle').checked = unlimitedChips;
+      }
+      renderBalance();
+      renderStats();
+      status.textContent = 'Save data imported.';
+      status.className = 'result-line win';
+    } catch (e){
+      status.textContent = "Couldn't read that — make sure it's valid save JSON.";
+      status.className = 'result-line loss';
+    }
+  });
+
+  document.getElementById('resetBackoffice').addEventListener('click', ()=>{
+    balance = 1000;
+    luckMultiplier = 1;
+    houseEdgeOff = false;
+    unlimitedChips = false;
+    oneShotLuckRestore = null;
+    document.getElementById('luckInput').value = '1';
+    document.getElementById('houseEdgeToggle').checked = false;
+    document.getElementById('unlimitedChipsToggle').checked = false;
+    renderBalance();
+  });
+
+  document.getElementById('resetStatsBtn').addEventListener('click', ()=>{
+    stats.handsPlayed = 0;
+    stats.totalWagered = 0;
+    stats.totalWon = 0;
+    stats.biggestWin = 0;
+    stats.currentStreak = 0;
+    stats.bestStreak = 0;
+    stats.peakBalance = balance;
+    stats.currentLossStreak = 0;
+    stats.bestLossStreak = 0;
+    stats.lowestBalance = balance;
+    stats.modesPlayed = {};
+    unlockedAchievements.clear();
+    renderStats();
+  });
+
+})();
+</script>
+
+<script src="../../worker-config.js"></script>
+
+</body>
+</html>
