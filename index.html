@@ -17,7 +17,7 @@
       <div class="brand-mark">SH</div>
       <div class="brand-text">
         <h1>Shelf</h1>
-        <span id="game-count-label">- Desingad av Fabbel</span>
+        <span id="game-count-label">- Designad av Fabbe</span>
       </div>
     </div>
     <div class="stats">
@@ -26,8 +26,8 @@
       <div><b id="stat-cat">0</b><span id="stat-cat-label">kategorier</span></div>
     </div>
     <div class="lang-toggle" id="lang-toggle">
-      <button data-lang="sv" id="lang-sv">SV</button>
-      <button data-lang="en" id="lang-en">EN</button>
+      <button data-lang="sv" id="lang-sv">🇸🇪 SV</button>
+      <button data-lang="en" id="lang-en">🇬🇧 EN</button>
     </div>
     <button class="add-game-btn" id="add-game-btn" style="display:none">⚙ <span id="add-game-label">Lägg till spel</span></button>
   </div>
@@ -72,23 +72,23 @@
     </div>
 
     <div class="modal-body" id="admin-connect-step">
-      <p class="modal-hint">
+      <p class="modal-hint" id="connect-hint-1">
         Det här kopplar portalen till ditt GitHub-repo, så att spel och
         meddelanden du lägger till här hamnar direkt i repot och dyker upp
         för alla som besöker sidan (efter att GitHub Pages byggt om, oftast
         under en minut).
       </p>
-      <p class="modal-hint modal-warn">
+      <p class="modal-hint modal-warn" id="connect-hint-2">
         Token sparas bara lokalt i den här webbläsaren. Dela den aldrig med
         någon. Skapa helst en "fine-grained" token med behörighet begränsad
         till bara det här repot (Contents: Read and write) — se README för
         instruktioner.
       </p>
-      <label>GitHub repo <span class="label-hint">(t.ex. dittnamn/game-portal)</span></label>
+      <label id="label-repo">GitHub repo <span class="label-hint" id="label-repo-hint">(t.ex. dittnamn/game-portal)</span></label>
       <input type="text" id="gh-repo" placeholder="dittnamn/game-portal">
-      <label>Personal Access Token</label>
+      <label id="label-token">Personal Access Token</label>
       <input type="password" id="gh-token" placeholder="ghp_...">
-      <label>Admin-nyckel <span class="label-hint">(valfritt — krävs bara för Feedback-fliken, se README)</span></label>
+      <label id="label-adminkey">Admin-nyckel <span class="label-hint" id="label-adminkey-hint">(valfritt — krävs bara för Feedback-fliken, se README)</span></label>
       <input type="password" id="worker-admin-key" placeholder="Samma som ADMIN_KEY i din Cloudflare Worker">
       <button class="modal-btn primary" id="gh-save">Spara & fortsätt</button>
       <div class="admin-status" id="connect-status"></div>
@@ -96,30 +96,30 @@
 
     <div id="admin-dashboard" style="display:none">
       <div class="admin-tabs">
-        <button class="admin-tab active" data-tab="add-game">+ Spel</button>
-        <button class="admin-tab" data-tab="announcement">📢 Meddelande</button>
-        <button class="admin-tab" data-tab="feedback">💬 Feedback</button>
-        <button class="admin-tab" data-tab="stats">📊 Statistik</button>
+        <button class="admin-tab active" data-tab="add-game" id="tab-btn-add-game">+ Spel</button>
+        <button class="admin-tab" data-tab="announcement" id="tab-btn-announcement">📢 Meddelande</button>
+        <button class="admin-tab" data-tab="feedback" id="tab-btn-feedback">💬 Feedback</button>
+        <button class="admin-tab" data-tab="stats" id="tab-btn-stats">📊 Statistik</button>
       </div>
 
       <div class="modal-body admin-tab-panel" id="tab-add-game">
-        <label>Titel</label>
+        <label id="label-title">Titel</label>
         <input type="text" id="game-title" placeholder="Mitt Spel">
 
-        <label>Kategori</label>
+        <label id="label-category">Kategori</label>
         <input type="text" id="game-category" list="cat-list" placeholder="Arcade, Puzzle, Sport...">
         <datalist id="cat-list"></datalist>
 
-        <label>Beskrivning (svenska)</label>
+        <label id="label-desc-sv">Beskrivning (svenska)</label>
         <textarea id="game-desc-sv" rows="2" placeholder="Kort beskrivning som visas på kortet"></textarea>
 
-        <label>Description <span class="label-hint">(engelska, valfritt)</span></label>
+        <label id="label-desc-en">Description <span class="label-hint" id="label-desc-en-hint">(engelska, valfritt)</span></label>
         <textarea id="game-desc-en" rows="2" placeholder="Leave blank to reuse the Swedish text"></textarea>
 
-        <label>Accentfärg</label>
+        <label id="label-color">Accentfärg</label>
         <input type="color" id="game-color" value="#4fc9c0">
 
-        <label>Spelfil <span class="label-hint">(en enda .html-fil)</span></label>
+        <label id="label-file">Spelfil <span class="label-hint" id="label-file-hint">(en enda .html-fil)</span></label>
         <input type="file" id="game-file" accept=".html">
 
         <button class="modal-btn primary" id="game-submit">Ladda upp & publicera</button>
@@ -127,8 +127,8 @@
       </div>
 
       <div class="modal-body admin-tab-panel" id="tab-announcement" style="display:none">
-        <p class="modal-hint">Visas som en banner högst upp för alla besökare tills de stänger den eller du tar bort den.</p>
-        <label>Meddelande</label>
+        <p class="modal-hint" id="announcement-hint">Visas som en banner högst upp för alla besökare tills de stänger den eller du tar bort den.</p>
+        <label id="label-announcement">Meddelande</label>
         <textarea id="announcement-text" rows="3" placeholder="T.ex. Scheduled restart 20:00 ikväll"></textarea>
         <button class="modal-btn primary" id="announcement-send">Skicka till alla</button>
         <button class="modal-btn ghost" id="announcement-clear">Ta bort meddelande</button>
@@ -136,14 +136,14 @@
       </div>
 
       <div class="modal-body admin-tab-panel" id="tab-feedback" style="display:none">
-        <p class="modal-hint">Kräver Admin-nyckel (samma sida där du la in GitHub-token) och att Worker-URL är satt i <code>leaderboard.js</code>.</p>
+        <p class="modal-hint" id="feedback-tab-hint">Kräver Admin-nyckel (samma sida där du la in GitHub-token) och att Worker-URL är satt i <code>leaderboard.js</code>.</p>
         <button class="modal-btn primary" id="feedback-refresh">Uppdatera</button>
         <div id="feedback-inbox" class="leaderboard-list"></div>
       </div>
 
       <div class="modal-body admin-tab-panel" id="tab-stats" style="display:none">
-        <p class="modal-hint">Full statistik (besökare, sessioner, vilka spel som spelas) finns i Google Analytics egen dashboard.</p>
-        <a class="modal-btn primary" href="https://analytics.google.com/" target="_blank" rel="noopener" style="display:block; text-align:center; text-decoration:none;">Öppna Google Analytics</a>
+        <p class="modal-hint" id="stats-hint">Full statistik (besökare, sessioner, vilka spel som spelas) finns i Google Analytics egen dashboard.</p>
+        <a class="modal-btn primary" id="stats-link" href="https://analytics.google.com/" target="_blank" rel="noopener" style="display:block; text-align:center; text-decoration:none;">Öppna Google Analytics</a>
       </div>
 
       <div class="modal-body" style="padding-top:0;">

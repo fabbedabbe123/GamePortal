@@ -69,7 +69,7 @@ rapporter, men Realtime är typ direkt).
 
 Adminpanelen (⚙-knappen) är **dold för vanliga besökare** — den syns bara
 i din egen webbläsare efter att du anslutit första gången. Innan dess,
-tryck **Ctrl+Shift+A** (Cmd+Shift+A på Mac) för att öppna den och göra din
+tryck **Ctrl+Alt+C** för att öppna den och göra din
 första anslutning — därefter dyker knappen upp automatiskt varje gång du
 besöker sidan i just den webbläsaren. Detta stoppar inte en teknisk person
 som letar i sidans kod, men gör det osynligt för vanliga nyfikna besökare.

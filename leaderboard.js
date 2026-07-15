@@ -13,6 +13,19 @@ const WORKER_URL = "https://shelf.fabian-hallberg09.workers.dev"; // <-- set aft
   const NICK_KEY = "shelf.nickname";
   const SUBMITTED_PREFIX = "shelf.lastSubmitted.";
 
+  const STRINGS = {
+    nickTitle: { sv: "Vad ska vi kalla dig?", en: "What should we call you?" },
+    nickHint: { sv: "Det här namnet syns på topplistorna för alla som spelar.", en: "This name shows up on the leaderboards for everyone who plays." },
+    nickLabel: { sv: "Smeknamn", en: "Nickname" },
+    nickPlaceholder: { sv: "T.ex. Fabbe", en: "e.g. Fabbe" },
+    nickSave: { sv: "Spara", en: "Save" },
+    lbLoading: { sv: "Laddar...", en: "Loading..." },
+    lbEmpty: { sv: "Ingen har spelat än — bli den första på listan!", en: "No one has played yet — be the first on the list!" },
+    lbError: { sv: "Kunde inte hämta topplistan just nu.", en: "Couldn't load the leaderboard right now." }
+  };
+  function lang() { return localStorage.getItem("shelf.lang") || "sv"; }
+  function t(key) { return STRINGS[key][lang()] || STRINGS[key].sv; }
+
   function workerReady() {
     return WORKER_URL && !WORKER_URL.includes("REPLACE-ME");
   }
@@ -25,6 +38,16 @@ const WORKER_URL = "https://shelf.fabian-hallberg09.workers.dev"; // <-- set aft
   }
 
   // ---------- Nickname modal ----------
+  function updateNicknameTexts() {
+    const overlay = document.getElementById("nickname-overlay");
+    if (!overlay) return;
+    overlay.querySelector(".modal-header h2").textContent = t("nickTitle");
+    overlay.querySelector(".modal-hint").textContent = t("nickHint");
+    overlay.querySelector("label").textContent = t("nickLabel");
+    overlay.querySelector("#nickname-input").placeholder = t("nickPlaceholder");
+    overlay.querySelector("#nickname-save").textContent = t("nickSave");
+  }
+
   function ensureNicknameModal() {
     if (document.getElementById("nickname-overlay")) return;
     const overlay = document.createElement("div");
@@ -55,10 +78,12 @@ const WORKER_URL = "https://shelf.fabian-hallberg09.workers.dev"; // <-- set aft
       overlay.classList.remove("open");
       document.dispatchEvent(new CustomEvent("shelf:nickname-set"));
     });
+    updateNicknameTexts();
   }
 
   function askNickname(callback) {
     ensureNicknameModal();
+    updateNicknameTexts();
     const overlay = document.getElementById("nickname-overlay");
     const input = document.getElementById("nickname-input");
     input.value = getNickname();
@@ -96,32 +121,35 @@ const WORKER_URL = "https://shelf.fabian-hallberg09.workers.dev"; // <-- set aft
     const overlay = document.getElementById("leaderboard-overlay");
     const list = document.getElementById("leaderboard-list");
     document.getElementById("leaderboard-title").textContent = `🏆 ${game.title}`;
-    list.innerHTML = `<p class="modal-hint">Laddar...</p>`;
+    list.innerHTML = `<p class="modal-hint">${t("lbLoading")}</p>`;
     overlay.classList.add("open");
 
     try {
       const res = await fetch(`${WORKER_URL}/scores?game=${encodeURIComponent(game.id)}`);
       const scores = await res.json();
       if (!Array.isArray(scores) || scores.length === 0) {
-        list.innerHTML = `<p class="modal-hint">Ingen har spelat än — bli den första på listan!</p>`;
+        list.innerHTML = `<p class="modal-hint">${t("lbEmpty")}</p>`;
         return;
       }
       const myName = getNickname();
+      const label = lang() === "en" && game.scoreLabelEn ? game.scoreLabelEn : game.scoreLabel;
       list.innerHTML = scores.map((entry, i) => `
         <div class="leaderboard-row ${entry.nickname === myName ? "me" : ""}">
           <span class="lb-rank">${i + 1}</span>
           <span class="lb-name">${escapeHtml(entry.nickname)}</span>
-          <span class="lb-score">${entry.score}${game.scoreLabel ? " " + game.scoreLabel : ""}</span>
+          <span class="lb-score">${entry.score}${label ? " " + label : ""}</span>
         </div>
       `).join("");
     } catch (e) {
-      list.innerHTML = `<p class="modal-hint">Kunde inte hämta topplistan just nu.</p>`;
+      list.innerHTML = `<p class="modal-hint">${t("lbError")}</p>`;
     }
   }
 
   function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
+
+  document.addEventListener("shelf:lang-changed", updateNicknameTexts);
 
   // ---------- Score submission ----------
   async function submitScoreIfImproved(game) {

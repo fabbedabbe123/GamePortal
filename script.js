@@ -32,7 +32,42 @@
     addGame: { sv: "Admin", en: "Admin" },
     modalTitle: { sv: "Admin", en: "Admin" },
     ghSave: { sv: "Spara & fortsätt", en: "Save & continue" },
-    gameSubmit: { sv: "Ladda upp & publicera", en: "Upload & publish" }
+    gameSubmit: { sv: "Ladda upp & publicera", en: "Upload & publish" },
+
+    connectHint1: { sv: "Det här kopplar portalen till ditt GitHub-repo, så att spel och meddelanden du lägger till här hamnar direkt i repot och dyker upp för alla som besöker sidan (efter att GitHub Pages byggt om, oftast under en minut).", en: "This connects the portal to your GitHub repo, so games and announcements you add here go straight into the repo and show up for everyone who visits the site (after GitHub Pages rebuilds, usually within a minute)." },
+    connectHint2: { sv: 'Token sparas bara lokalt i den här webbläsaren. Dela den aldrig med någon. Skapa helst en "fine-grained" token med behörighet begränsad till bara det här repot (Contents: Read and write) — se README för instruktioner.', en: 'The token is only stored locally in this browser. Never share it with anyone. Ideally create a "fine-grained" token scoped to just this repo (Contents: Read and write) — see the README for instructions.' },
+    labelRepo: { sv: "GitHub repo", en: "GitHub repo" },
+    labelRepoHint: { sv: "(t.ex. dittnamn/game-portal)", en: "(e.g. yourname/game-portal)" },
+    labelToken: { sv: "Personal Access Token", en: "Personal Access Token" },
+    labelAdminKey: { sv: "Admin-nyckel", en: "Admin key" },
+    labelAdminKeyHint: { sv: "(valfritt — krävs bara för Feedback-fliken, se README)", en: "(optional — only needed for the Feedback tab, see README)" },
+
+    tabAddGame: { sv: "+ Spel", en: "+ Game" },
+    tabAnnouncement: { sv: "📢 Meddelande", en: "📢 Announcement" },
+    tabFeedback: { sv: "💬 Feedback", en: "💬 Feedback" },
+    tabStats: { sv: "📊 Statistik", en: "📊 Stats" },
+
+    labelTitle: { sv: "Titel", en: "Title" },
+    labelCategory: { sv: "Kategori", en: "Category" },
+    labelDescSv: { sv: "Beskrivning (svenska)", en: "Description (Swedish)" },
+    labelDescEn: { sv: "Description", en: "Description" },
+    labelDescEnHint: { sv: "(engelska, valfritt)", en: "(English, optional)" },
+    labelColor: { sv: "Accentfärg", en: "Accent color" },
+    labelFile: { sv: "Spelfil", en: "Game file" },
+    labelFileHint: { sv: "(en enda .html-fil)", en: "(a single .html file)" },
+
+    announcementHint: { sv: "Visas som en banner högst upp för alla besökare tills de stänger den eller du tar bort den.", en: "Shows as a banner at the top for every visitor until they close it or you remove it." },
+    labelAnnouncement: { sv: "Meddelande", en: "Message" },
+    announcementSend: { sv: "Skicka till alla", en: "Send to everyone" },
+    announcementClear: { sv: "Ta bort meddelande", en: "Remove message" },
+
+    feedbackTabHint: { sv: "Kräver Admin-nyckel (samma sida där du la in GitHub-token) och att Worker-URL är satt i leaderboard.js.", en: "Requires the Admin key (same page where you entered the GitHub token) and a Worker URL set in leaderboard.js." },
+    feedbackRefresh: { sv: "Uppdatera", en: "Refresh" },
+
+    statsHint: { sv: "Full statistik (besökare, sessioner, vilka spel som spelas) finns i Google Analytics egen dashboard.", en: "Full stats (visitors, sessions, which games get played) live in Google Analytics' own dashboard." },
+    statsLink: { sv: "Öppna Google Analytics", en: "Open Google Analytics" },
+
+    disconnect: { sv: "Koppla från GitHub", en: "Disconnect from GitHub" }
   };
   function t(key) { return STRINGS[key][lang] || STRINGS[key].sv; }
 
@@ -218,6 +253,11 @@
   });
 
   // ---------- Language ----------
+  function setText(id, key) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t(key);
+  }
+
   function applyLanguage() {
     document.documentElement.lang = lang;
     document.getElementById("game-count-label").textContent = t("tagline");
@@ -230,12 +270,46 @@
     document.getElementById("fullscreen-btn").title = t("fullscreenTitle");
     searchInput.placeholder = t("searchPlaceholder");
     document.getElementById("add-game-label").textContent = t("addGame");
-    const adminTitleEl = document.getElementById("admin-title");
-    if (adminTitleEl) adminTitleEl.textContent = t("modalTitle");
-    const ghSaveEl = document.getElementById("gh-save");
-    if (ghSaveEl) ghSaveEl.textContent = t("ghSave");
-    const gameSubmitEl = document.getElementById("game-submit");
-    if (gameSubmitEl) gameSubmitEl.textContent = t("gameSubmit");
+    setText("admin-title", "modalTitle");
+    setText("gh-save", "ghSave");
+    setText("game-submit", "gameSubmit");
+
+    setText("connect-hint-1", "connectHint1");
+    setText("connect-hint-2", "connectHint2");
+    setText("label-repo-hint", "labelRepoHint");
+    setText("label-token", "labelToken");
+    setText("label-adminkey-hint", "labelAdminKeyHint");
+    // labelRepo / labelAdminKey have a nested hint span, so set only the leading text node
+    const labelRepoEl = document.getElementById("label-repo");
+    if (labelRepoEl) labelRepoEl.firstChild.textContent = t("labelRepo") + " ";
+    const labelAdminKeyEl = document.getElementById("label-adminkey");
+    if (labelAdminKeyEl) labelAdminKeyEl.firstChild.textContent = t("labelAdminKey") + " ";
+
+    setText("tab-btn-add-game", "tabAddGame");
+    setText("tab-btn-announcement", "tabAnnouncement");
+    setText("tab-btn-feedback", "tabFeedback");
+    setText("tab-btn-stats", "tabStats");
+
+    setText("label-title", "labelTitle");
+    setText("label-category", "labelCategory");
+    setText("label-desc-sv", "labelDescSv");
+    setText("label-desc-en-hint", "labelDescEnHint");
+    const labelDescEnEl = document.getElementById("label-desc-en");
+    if (labelDescEnEl) labelDescEnEl.firstChild.textContent = t("labelDescEn") + " ";
+    setText("label-color", "labelColor");
+    setText("label-file-hint", "labelFileHint");
+    const labelFileEl = document.getElementById("label-file");
+    if (labelFileEl) labelFileEl.firstChild.textContent = t("labelFile") + " ";
+
+    setText("announcement-hint", "announcementHint");
+    setText("label-announcement", "labelAnnouncement");
+    setText("announcement-send", "announcementSend");
+    setText("announcement-clear", "announcementClear");
+
+    setText("feedback-refresh", "feedbackRefresh");
+    setText("stats-hint", "statsHint");
+    setText("stats-link", "statsLink");
+    setText("gh-disconnect", "disconnect");
 
     langButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.lang === lang));
 
@@ -247,6 +321,8 @@
       const game = GAMES.find(g => g.id === currentGameId);
       if (game) gameFrame.src = `games/${game.folder}/index.html?lang=${lang}`;
     }
+
+    document.dispatchEvent(new CustomEvent("shelf:lang-changed", { detail: { lang } }));
   }
 
   langButtons.forEach(btn => {

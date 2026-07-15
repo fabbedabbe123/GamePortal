@@ -23,6 +23,7 @@ const GAMES = [
     cart: "01",
     scoreKey: "neonRunnerBest",
     scoreLabel: "Poäng",
+    scoreLabelEn: "Points",
     scoreBetter: "higher",
     thumb: `
       <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
@@ -59,6 +60,7 @@ const GAMES = [
     cart: "02",
     scoreKey: "cartridgeMatchBestMoves",
     scoreLabel: "Drag",
+    scoreLabelEn: "Moves",
     scoreBetter: "lower",
     thumb: `
       <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">

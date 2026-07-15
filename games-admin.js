@@ -83,7 +83,7 @@
 
   // ---------- Keep the admin button hidden from regular visitors ----------
   // It only appears automatically once this browser is already connected.
-  // Before that, the owner reveals it once with Ctrl+Alt+c (or ⌘+Shift+A
+  // Before that, the owner reveals it once with Ctrl+Shift+A (or ⌘+Shift+A
   // on Mac) to do the first-time setup — after that it just stays visible
   // on that browser/device.
   function updateButtonVisibility() {
@@ -93,7 +93,7 @@
 
   document.addEventListener("keydown", (e) => {
     const key = e.key.toLowerCase();
-    if ((e.ctrlKey || e.metaKey) && e.altKey && key === "c") {
+    if (e.ctrlKey && e.altKey && key === "c") {
       e.preventDefault();
       openBtn.style.display = "inline-block";
       open();
