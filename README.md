@@ -219,6 +219,40 @@ felmeddelande med en "Tillbaka"-knapp istället för en tom vit ruta.
 (uppladdning, meddelanden, feedback, topplista-nollställning) växlar nu
 språk tillsammans med resten av portalen.
 
+## Användarprofiler (Fas 1: unika användarnamn)
+
+En **profil-knapp** dyker upp nere i vänstra hörnet av portalen för alla
+besökare — "👤 Välj namn" tills man valt ett, sen "👤 [Namn]" därefter.
+
+Första gången någon klickar (eller försöker sätta ett highscore) får de
+välja ett **unikt användarnamn** — Workern kollar att ingen annan redan
+tagit det. Namnet blir personens identitet överallt: samma namn syns på
+topplistorna, och personen kan se sin egen profil (medlem sedan-datum,
+antal omgångar spelade, hur många olika spel de testat, och
+**achievements** de låst upp):
+
+- 🆕 Nykomling — skapat konto
+- 🎮 5 omgångar spelade
+- 🏅 25 omgångar spelade
+- 💯 100 omgångar spelade
+- 🗺️ Utforskare — spelat minst 3 olika spel
+
+**Tekniskt:** identiteten är kopplad till en hemlig token som sparas i
+webbläsaren när kontot skapas — ingen inloggning, inget lösenord. Byter
+man enhet/webbläsare måste man skapa ett nytt konto (eller ett med samma
+namn om det gamla aldrig användes på den nya enheten — namnet i sig är
+bara reserverat, inte kopplat till en person på något djupare sätt).
+
+Det gamla, enkla "smeknamnet" för topplistan är borta — det är samma
+användarnamn som styr båda nu, så du väljer bara en gång.
+
+**Kräver:** att din Worker-kod är uppdaterad igen (nya `/users`-endpoints)
+— samma vanliga rutin: kopiera in `worker/cloudflare-worker.js` i
+Cloudflare, Deploy.
+
+Nästa steg i det här projektet: vänner via användarnamn, sen asynkrona
+utmaningar.
+
 ## Engångskoder för spel-valutor
 
 Adminpanelen har en **🎟 Koder**-flik: välj spel (Neon Alley eller The

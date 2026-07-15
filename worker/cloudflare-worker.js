@@ -208,6 +208,72 @@ export default {
         return json({ ok: true, currency: data.currency, amount: data.amount });
       }
 
+      // ---------- Accounts: claim a unique username ----------
+      if (url.pathname === "/users" && request.method === "POST") {
+        if (!(await checkRateLimit(env, request, "claim", 10, 600))) {
+          return json({ error: "too many requests, slow down" }, 429);
+        }
+        const body = await request.json();
+        const username = String(body.username || "").trim().slice(0, 24);
+        if (!username || !/^[a-zA-Z0-9_ ]{2,24}$/.test(username)) {
+          return json({ error: "invalid username" }, 400);
+        }
+        const key = `user:${username.toLowerCase()}`;
+        const existing = await env.SHELF_KV.get(key);
+        if (existing) return json({ error: "taken" }, 409);
+
+        const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        let secret = "";
+        for (let i = 0; i < 32; i++) secret += chars[Math.floor(Math.random() * chars.length)];
+
+        const record = {
+          username, secret, createdAt: Date.now(),
+          stats: { gamesPlayed: 0, distinctGames: [], lastPlayed: null },
+          achievements: ["newcomer"]
+        };
+        await env.SHELF_KV.put(key, JSON.stringify(record));
+        return json({ ok: true, username, secret });
+      }
+
+      // ---------- Accounts: public profile lookup ----------
+      if (url.pathname === "/users" && request.method === "GET") {
+        const username = url.searchParams.get("username") || "";
+        if (!username) return json({ error: "missing username" }, 400);
+        const raw = await env.SHELF_KV.get(`user:${username.toLowerCase()}`);
+        if (!raw) return json({ error: "not found" }, 404);
+        const data = JSON.parse(raw);
+        return json({ username: data.username, createdAt: data.createdAt, stats: data.stats, achievements: data.achievements });
+      }
+
+      // ---------- Accounts: track a play, evaluate achievements ----------
+      if (url.pathname === "/users/track" && request.method === "POST") {
+        const body = await request.json();
+        const username = String(body.username || "");
+        const secret = String(body.secret || "");
+        const game = String(body.game || "").slice(0, 60);
+        if (!username || !secret || !game) return json({ error: "invalid payload" }, 400);
+
+        const key = `user:${username.toLowerCase()}`;
+        const raw = await env.SHELF_KV.get(key);
+        if (!raw) return json({ error: "not found" }, 404);
+        const data = JSON.parse(raw);
+        if (data.secret !== secret) return json({ error: "unauthorized" }, 401);
+
+        data.stats.gamesPlayed = (data.stats.gamesPlayed || 0) + 1;
+        data.stats.lastPlayed = Date.now();
+        if (!data.stats.distinctGames.includes(game)) data.stats.distinctGames.push(game);
+
+        const earned = new Set(data.achievements || []);
+        if (data.stats.gamesPlayed >= 5) earned.add("played5");
+        if (data.stats.gamesPlayed >= 25) earned.add("played25");
+        if (data.stats.gamesPlayed >= 100) earned.add("played100");
+        if (data.stats.distinctGames.length >= 3) earned.add("explorer");
+        data.achievements = Array.from(earned);
+
+        await env.SHELF_KV.put(key, JSON.stringify(data));
+        return json({ ok: true, stats: data.stats, achievements: data.achievements });
+      }
+
       return json({ error: "not found" }, 404);
     } catch (err) {
       return json({ error: err.message || "server error" }, 500);

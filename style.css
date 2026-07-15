@@ -744,6 +744,34 @@ a { color: inherit; }
 
 .hidden { display: none !important; }
 
+#profile-corner {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 90;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  padding: 9px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px -12px rgba(0,0,0,0.6);
+  transition: all 0.15s ease;
+}
+
+#profile-corner:hover {
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 560px) {
+  #profile-corner { left: 12px; bottom: 12px; font-size: 11px; padding: 8px 13px; }
+}
+
 #sort-select {
   background: var(--surface);
   border: 1px solid var(--stroke);

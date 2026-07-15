@@ -274,6 +274,7 @@
       });
     }
     trackPlayCount(game.id);
+    if (window.ShelfProfile) window.ShelfProfile.trackPlay(game.id);
     if (cardEl) cardEl.classList.add("launching");
     setTimeout(() => {
       gameError.classList.add("hidden");
