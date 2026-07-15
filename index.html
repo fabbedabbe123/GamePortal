@@ -99,6 +99,7 @@
         <button class="admin-tab active" data-tab="add-game" id="tab-btn-add-game">+ Spel</button>
         <button class="admin-tab" data-tab="announcement" id="tab-btn-announcement">📢 Meddelande</button>
         <button class="admin-tab" data-tab="feedback" id="tab-btn-feedback">💬 Feedback</button>
+        <button class="admin-tab" data-tab="leaderboards" id="tab-btn-leaderboards">🏆 Topplistor</button>
         <button class="admin-tab" data-tab="stats" id="tab-btn-stats">📊 Statistik</button>
       </div>
 
@@ -141,6 +142,14 @@
         <div id="feedback-inbox" class="leaderboard-list"></div>
       </div>
 
+       <div class="modal-body admin-tab-panel" id="tab-leaderboards" style="display:none">
+        <p class="modal-hint" id="leaderboards-hint">Kräver Admin-nyckel. Nollställningen går inte att ångra.</p>
+        <label id="label-lb-game">Spel</label>
+        <select id="lb-game-select"></select>
+        <button class="modal-btn ghost" id="lb-reset-btn">Nollställ den här topplistan</button>
+        <div class="admin-status" id="lb-reset-status"></div>
+      </div>
+      
       <div class="modal-body admin-tab-panel" id="tab-stats" style="display:none">
         <p class="modal-hint" id="stats-hint">Full statistik (besökare, sessioner, vilka spel som spelas) finns i Google Analytics egen dashboard.</p>
         <a class="modal-btn primary" id="stats-link" href="https://analytics.google.com/" target="_blank" rel="noopener" style="display:block; text-align:center; text-decoration:none;">Öppna Google Analytics</a>
