@@ -375,5 +375,70 @@
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-  feedbackRefresh.addEventListener("click", loadFeedback);
+feedbackRefresh.addEventListener("click", loadFeedback);
+
+  // ---------- Leaderboard reset ----------
+  const lbGameSelect = document.getElementById("lb-game-select");
+  const lbResetBtn = document.getElementById("lb-reset-btn");
+  const lbResetStatus = document.getElementById("lb-reset-status");
+  let lbResetArmed = false;
+
+  function populateLeaderboardGames() {
+    if (typeof GAMES === "undefined") return;
+    const withScores = GAMES.filter(g => g.scoreKey);
+    lbGameSelect.innerHTML = withScores.map(g => `<option value="${g.id}">${g.title}</option>`).join("");
+  }
+
+  function resetResetButton() {
+    lbResetArmed = false;
+    lbResetBtn.textContent = "Nollställ den här topplistan";
+    lbResetBtn.classList.remove("primary");
+  }
+
+  lbResetBtn.addEventListener("click", async () => {
+    const adminKey = getAdminKey();
+    if (typeof WORKER_URL === "undefined" || WORKER_URL.includes("REPLACE-ME")) {
+      lbResetStatus.className = "admin-status error";
+      lbResetStatus.textContent = "Worker-URL är inte konfigurerad än — se README.";
+      return;
+    }
+    if (!adminKey) {
+      lbResetStatus.className = "admin-status error";
+      lbResetStatus.textContent = "Lägg in din Admin-nyckel på anslutningssidan först.";
+      return;
+    }
+
+    if (!lbResetArmed) {
+      lbResetArmed = true;
+      lbResetBtn.textContent = "Klicka igen för att bekräfta — går inte att ångra";
+      lbResetBtn.classList.add("primary");
+      return;
+    }
+
+    const gameId = lbGameSelect.value;
+    if (!gameId) return;
+
+    lbResetStatus.className = "admin-status pending";
+    lbResetStatus.textContent = "Nollställer...";
+    try {
+      const res = await fetch(`${WORKER_URL}/scores?game=${encodeURIComponent(gameId)}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${adminKey}` }
+      });
+      if (!res.ok) throw new Error(`Worker svarade ${res.status}`);
+      lbResetStatus.className = "admin-status success";
+      lbResetStatus.textContent = "Topplistan är nollställd.";
+    } catch (err) {
+      lbResetStatus.className = "admin-status error";
+      lbResetStatus.textContent = "Något gick fel: " + err.message;
+    } finally {
+      resetResetButton();
+    }
+  });
+
+  document.querySelector('[data-tab="leaderboards"]').addEventListener("click", () => {
+    populateLeaderboardGames();
+    resetResetButton();
+    lbResetStatus.textContent = "";
+  });
 })();
