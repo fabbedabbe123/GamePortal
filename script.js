@@ -67,7 +67,8 @@
     statsHint: { sv: "Full statistik (besökare, sessioner, vilka spel som spelas) finns i Google Analytics egen dashboard.", en: "Full stats (visitors, sessions, which games get played) live in Google Analytics' own dashboard." },
     statsLink: { sv: "Öppna Google Analytics", en: "Open Google Analytics" },
 
-    disconnect: { sv: "Koppla från GitHub", en: "Disconnect from GitHub" }
+    disconnect: { sv: "Koppla från GitHub", en: "Disconnect from GitHub" },
+    leaderboardBtn: { sv: "Topplista", en: "Leaderboard" }
   };
   function t(key) { return STRINGS[key][lang] || STRINGS[key].sv; }
 
@@ -150,7 +151,7 @@
           </div>
           <p class="cart-desc">${gameDesc(game)}</p>
           <div class="cart-meta">
-            ${game.scoreKey ? `<button class="lb-btn" data-id="${game.id}" aria-label="leaderboard">🏆 Topplista</button>` : "<span></span>"}
+            ${game.scoreKey ? `<button class="lb-btn" data-id="${game.id}" aria-label="leaderboard">🏆 ${t("leaderboardBtn")}</button>` : "<span></span>"}
             <span class="cart-play">▶ ${t("play")}</span>
           </div>
         </div>
