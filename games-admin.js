@@ -27,6 +27,7 @@
     connectTokenError: { sv: "Token saknas.", en: "Token is missing." },
     submitMissingFields: { sv: "Fyll i titel, beskrivning och välj en spelfil.", en: "Fill in the title, description, and choose a game file." },
     readingFile: { sv: "Läser filen...", en: "Reading the file..." },
+    checkingName: { sv: "Kontrollerar namnet...", en: "Checking the name..." },
     readingZip: { sv: "Läser zip-filen...", en: "Reading the zip file..." },
     zipNoIndex: { sv: "Zip-filen måste innehålla en index.html i roten.", en: "The zip file must contain an index.html at its root." },
     updatingGamesJs: { sv: "Uppdaterar games.js...", en: "Updating games.js..." },
@@ -54,6 +55,11 @@
     return lang() === "en"
       ? `Done! "${title}" has been committed to the repo. Give GitHub Pages a minute to rebuild, then it'll show up for everyone.`
       : `Klart! "${title}" är committat till repot. Ge GitHub Pages en minut att bygga om, sedan syns det för alla.`;
+  }
+  function renamedNoticeMsg(slug) {
+    return lang() === "en"
+      ? `(A game with that name already existed, so this one was saved as "${slug}".)`
+      : `(Ett spel med det namnet fanns redan, så det här sparades som "${slug}".)`;
   }
 
   const overlay = document.getElementById("admin-overlay");
@@ -284,9 +290,27 @@
     }
   }
 
+  function normalizeCategory(raw) {
+    const trimmed = raw.trim();
+    if (!trimmed) return "";
+    // Title-case each word so "arcade" / "ARCADE" / "Arcade" all collapse
+    // into the same filter pill instead of three near-duplicates.
+    return trimmed
+      .split(/\s+/)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ");
+  }
+
+  function uniqueSlug(baseSlug, existingIds) {
+    if (!existingIds.has(baseSlug)) return baseSlug;
+    let n = 2;
+    while (existingIds.has(`${baseSlug}-${n}`)) n++;
+    return `${baseSlug}-${n}`;
+  }
+
   submitBtn.addEventListener("click", async () => {
     const title = titleInput.value.trim();
-    const category = categoryInput.value.trim() || "Övrigt";
+    const category = normalizeCategory(categoryInput.value) || "Övrigt";
     const descSv = descSvInput.value.trim();
     const descEn = descEnInput.value.trim() || descSv;
     const color = colorInput.value;
@@ -301,10 +325,19 @@
     submitBtn.disabled = true;
     submitStatus.className = "admin-status pending";
     const setStatus = (msg) => { submitStatus.textContent = msg; };
-    setStatus(file.name.toLowerCase().endsWith(".zip") ? t("readingZip") : t("readingFile"));
+    setStatus(t("checkingName"));
 
     try {
-      const slug = slugify(title);
+      // Fetch games.js up front so we can both check for name collisions
+      // and know how many games already exist (for the cart number).
+      const gamesFile = await ghApi("games.js");
+      const gamesText = fromBase64Utf8(gamesFile.content);
+      const existingIds = new Set([...gamesText.matchAll(/id:\s*"([^"]+)"/g)].map(m => m[1]));
+      const baseSlug = slugify(title);
+      const slug = uniqueSlug(baseSlug, existingIds);
+      const renamed = slug !== baseSlug;
+
+      setStatus(file.name.toLowerCase().endsWith(".zip") ? t("readingZip") : t("readingFile"));
       const isZip = file.name.toLowerCase().endsWith(".zip");
 
       if (isZip) {
@@ -314,9 +347,7 @@
       }
 
       setStatus(t("updatingGamesJs"));
-      const gamesFile = await ghApi("games.js");
-      const gamesText = fromBase64Utf8(gamesFile.content);
-      const count = (gamesText.match(/id:\s*"/g) || []).length;
+      const count = existingIds.size;
       const cart = String(count + 1).padStart(2, "0");
       const thumb = generateThumb(title, color);
       const addedAt = new Date().toISOString().slice(0, 10);
@@ -355,7 +386,7 @@
       }
 
       submitStatus.className = "admin-status success";
-      submitStatus.textContent = submitSuccessMsg(title);
+      submitStatus.textContent = submitSuccessMsg(title) + (renamed ? " " + renamedNoticeMsg(slug) : "");
       titleInput.value = "";
       categoryInput.value = "";
       descSvInput.value = "";
