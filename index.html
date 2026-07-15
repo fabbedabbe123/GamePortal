@@ -37,6 +37,12 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       <input type="text" id="search" placeholder="Sök bland dina spel...">
     </div>
+    <select id="sort-select">
+      <option value="default" id="sort-opt-default">Standard</option>
+      <option value="newest" id="sort-opt-newest">Senast tillagd</option>
+      <option value="mostplayed" id="sort-opt-mostplayed">Mest spelad</option>
+      <option value="alpha" id="sort-opt-alpha">A–Ö</option>
+    </select>
     <div class="pill-row" id="category-pills"></div>
     <div class="pill fav-pill" id="fav-toggle">★ <span id="fav-toggle-label">Favoriter</span></div>
   </div>
@@ -62,6 +68,10 @@
     </button>
   </div>
   <iframe id="game-frame" src="" allow="fullscreen; gamepad; autoplay"></iframe>
+  <div class="game-error hidden" id="game-error">
+    <p id="game-error-text">Spelet kunde inte laddas. Kolla att filerna laddats upp korrekt.</p>
+    <button class="modal-btn primary" id="game-error-back">Tillbaka till biblioteket</button>
+  </div>
 </div>
 
 <div class="modal-overlay" id="admin-overlay">
@@ -120,8 +130,8 @@
         <label id="label-color">Accentfärg</label>
         <input type="color" id="game-color" value="#4fc9c0">
 
-        <label id="label-file">Spelfil <span class="label-hint" id="label-file-hint">(en enda .html-fil)</span></label>
-        <input type="file" id="game-file" accept=".html">
+        <label id="label-file">Spelfil <span class="label-hint" id="label-file-hint">(en enda .html-fil, eller .zip om spelet har flera filer)</span></label>
+        <input type="file" id="game-file" accept=".html,.zip">
 
         <button class="modal-btn primary" id="game-submit">Ladda upp & publicera</button>
         <div class="admin-status" id="submit-status"></div>
@@ -142,14 +152,14 @@
         <div id="feedback-inbox" class="leaderboard-list"></div>
       </div>
 
-       <div class="modal-body admin-tab-panel" id="tab-leaderboards" style="display:none">
+      <div class="modal-body admin-tab-panel" id="tab-leaderboards" style="display:none">
         <p class="modal-hint" id="leaderboards-hint">Kräver Admin-nyckel. Nollställningen går inte att ångra.</p>
         <label id="label-lb-game">Spel</label>
         <select id="lb-game-select"></select>
         <button class="modal-btn ghost" id="lb-reset-btn">Nollställ den här topplistan</button>
         <div class="admin-status" id="lb-reset-status"></div>
       </div>
-      
+
       <div class="modal-body admin-tab-panel" id="tab-stats" style="display:none">
         <p class="modal-hint" id="stats-hint">Full statistik (besökare, sessioner, vilka spel som spelas) finns i Google Analytics egen dashboard.</p>
         <a class="modal-btn primary" id="stats-link" href="https://analytics.google.com/" target="_blank" rel="noopener" style="display:block; text-align:center; text-decoration:none;">Öppna Google Analytics</a>
@@ -162,6 +172,7 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="games.js"></script>
 <script src="script.js"></script>
 <script src="games-admin.js"></script>

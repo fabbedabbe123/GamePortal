@@ -742,6 +742,58 @@ a { color: inherit; }
   opacity: 0.7;
 }
 
+.hidden { display: none !important; }
+
+#sort-select {
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  outline: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+#sort-select:focus { border-color: var(--accent-2); }
+
+.new-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: #12141c;
+  background: var(--accent);
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.game-error {
+  position: absolute;
+  inset: 0;
+  top: 61px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px;
+  text-align: center;
+}
+
+.game-error p {
+  color: var(--muted);
+  font-size: 14px;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
 /* ---------- Announcement banner ---------- */
 
 #announcement-banner {

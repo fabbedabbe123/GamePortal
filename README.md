@@ -65,6 +65,17 @@ ingenting alls för dem. Detta är ett EU/GDPR-krav, inte valfritt att hoppa
 Statistiken dyker upp med viss fördröjning (ofta någon timme för de flesta
 rapporter, men Realtime är typ direkt).
 
+### Nollställa en topplista
+
+Adminpanelen har en **🏆 Topplistor**-flik: välj spel i listan, klicka
+**"Nollställ den här topplistan"** en gång (knappen ber om bekräftelse),
+klicka igen för att faktiskt utföra det. Går inte att ångra.
+
+Detta kräver att du **uppdaterar din Worker-kod** i Cloudflare (koden i
+`worker/cloudflare-worker.js` har en ny DELETE-funktion) — klistra in den
+uppdaterade filen i Cloudflares editor och **Deploy** igen, annars ger
+knappen bara ett felmeddelande.
+
 ## Delad topplista, meddelanden till alla och feedback
 
 Adminpanelen (⚙-knappen) är **dold för vanliga besökare** — den syns bara
@@ -165,8 +176,8 @@ du bara öppnar filen lokalt utan att ha pushat något än.
 2. Skriv in repot som `dittanvändarnamn/game-portal`
 3. Klistra in token, klicka **Spara & fortsätt**
 4. Fyll i titel, kategori, beskrivning, en accentfärg och välj din spelfil
-   (en enda `.html`-fil — spel med flera filer måste fortfarande läggas till
-   manuellt enligt sektionen ovan)
+   (en `.html`-fil för enkla spel, eller en `.zip` om spelet har flera
+   filer — se avsnittet "Nya funktioner" nedan)
 5. Klicka **Ladda upp & publicera**
 
 **Säkerhet:** token sparas bara i din egen webbläsares `localStorage` — den
@@ -175,6 +186,38 @@ i någon fil som committas. Dela den ändå aldrig med någon, och använd den
 bara på enheter du själv litar på. Vill du koppla bort, finns en
 "Koppla från GitHub"-knapp i panelen. Dina kompisar behöver ingen token —
 de bara spelar via länken som vanligt.
+
+## Nya funktioner i den här omgången
+
+**Spel med flera filer:** "Lägg till spel" accepterar nu även en `.zip`-fil,
+inte bara en enda `.html`. Zippa ihop din spelmapp (måste ha en `index.html`
+i roten av zippen, plus valfria bilder/JS/CSS-filer i samma mapp eller
+undermappar) och välj den istället för en enskild HTML-fil — varje fil i
+zippen laddas upp till sin egen plats under `games/<spelnamn>/`.
+
+**Spam-skydd:** Workern har nu en enkel gräns på antal förfrågningar per
+IP-adress (30 poänginlämningar / 10 idéer per 10 minuter) för att undvika
+skräp från botar eller elaka besökare. **Du måste uppdatera din Worker-kod
+i Cloudflare** (klistra in den nya `worker/cloudflare-worker.js` och
+Deploy) för att få detta, annars fortsätter den gamla koden köra utan
+skyddet.
+
+**"NY"-märke:** Spel som lagts till de senaste 7 dagarna får automatiskt
+en liten "NY"/"NEW"-etikett bredvid titeln. Kräver inget extra jobb —
+sätts automatiskt när du lägger till spel via adminpanelen.
+
+**Sortering:** En ny dropdown bredvid sökrutan låter dig och dina kompisar
+sortera biblioteket på Standard, Senast tillagd, Mest spelad, eller A–Ö.
+"Mest spelad" räknas via Workern (samma en som sköter topplistorna) — kräver
+alltså att Worker-URL är satt i `leaderboard.js`.
+
+**Felsida vid trasigt spel:** Om ett spel inte laddar inom några sekunder
+(t.ex. om en fil glömdes bort vid uppladdning) visas ett vänligt
+felmeddelande med en "Tillbaka"-knapp istället för en tom vit ruta.
+
+**Fullständig översättning:** Alla statusmeddelanden i adminpanelen
+(uppladdning, meddelanden, feedback, topplista-nollställning) växlar nu
+språk tillsammans med resten av portalen.
 
 ## Lägg till ett eget spel manuellt
 

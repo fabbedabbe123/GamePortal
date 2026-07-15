@@ -22,7 +22,7 @@
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type,Authorization"
 };
 
@@ -31,6 +31,18 @@ function json(data, status = 200) {
     status,
     headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
   });
+}
+
+// Simple abuse guard: allows up to `limit` requests per IP per `windowSeconds`
+// for a given bucket (e.g. "scores" or "feedback"). Not perfectly precise
+// (KV is eventually consistent) but enough to stop casual spam/bots.
+async function checkRateLimit(env, request, bucket, limit, windowSeconds) {
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const key = `ratelimit:${bucket}:${ip}`;
+  const current = parseInt((await env.SHELF_KV.get(key)) || "0", 10);
+  if (current >= limit) return false;
+  await env.SHELF_KV.put(key, String(current + 1), { expirationTtl: windowSeconds });
+  return true;
 }
 
 export default {
@@ -52,6 +64,9 @@ export default {
 
       // ---------- Leaderboard: submit a score ----------
       if (url.pathname === "/scores" && request.method === "POST") {
+        if (!(await checkRateLimit(env, request, "scores", 30, 600))) {
+          return json({ error: "too many requests, slow down" }, 429);
+        }
         const body = await request.json();
         const game = String(body.game || "").slice(0, 60);
         const nickname = String(body.nickname || "Anonym").slice(0, 24);
@@ -78,8 +93,21 @@ export default {
         return json({ ok: true });
       }
 
+      // ---------- Leaderboard: reset a game's scores (admin only) ----------
+      if (url.pathname === "/scores" && request.method === "DELETE") {
+        const auth = request.headers.get("Authorization") || "";
+        if (auth !== `Bearer ${env.ADMIN_KEY}`) return json({ error: "unauthorized" }, 401);
+        const game = url.searchParams.get("game");
+        if (!game) return json({ error: "missing game" }, 400);
+        await env.SHELF_KV.delete(`scores:${game}`);
+        return json({ ok: true });
+      }
+
       // ---------- Feedback: submit an idea ----------
       if (url.pathname === "/feedback" && request.method === "POST") {
+        if (!(await checkRateLimit(env, request, "feedback", 10, 600))) {
+          return json({ error: "too many requests, slow down" }, 429);
+        }
         const body = await request.json();
         const name = String(body.name || "Anonym").slice(0, 40);
         const message = String(body.message || "").trim().slice(0, 500);
@@ -99,6 +127,22 @@ export default {
         if (auth !== `Bearer ${env.ADMIN_KEY}`) return json({ error: "unauthorized" }, 401);
         const list = JSON.parse((await env.SHELF_KV.get("feedback")) || "[]");
         return json(list);
+      }
+
+      // ---------- Play counts (used for "most played" sorting) ----------
+      if (url.pathname === "/plays" && request.method === "GET") {
+        const counts = JSON.parse((await env.SHELF_KV.get("playcounts")) || "{}");
+        return json(counts);
+      }
+
+      if (url.pathname === "/plays" && request.method === "POST") {
+        const body = await request.json();
+        const game = String(body.game || "").slice(0, 60);
+        if (!game) return json({ error: "missing game" }, 400);
+        const counts = JSON.parse((await env.SHELF_KV.get("playcounts")) || "{}");
+        counts[game] = (counts[game] || 0) + 1;
+        await env.SHELF_KV.put("playcounts", JSON.stringify(counts));
+        return json({ ok: true });
       }
 
       return json({ error: "not found" }, 404);

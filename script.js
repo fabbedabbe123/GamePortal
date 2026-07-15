@@ -9,11 +9,16 @@
   const backBtn = document.getElementById("back-btn");
   const fullscreenBtn = document.getElementById("fullscreen-btn");
   const langButtons = document.querySelectorAll("#lang-toggle button");
+  const sortSelect = document.getElementById("sort-select");
+  const gameError = document.getElementById("game-error");
+  const gameErrorBack = document.getElementById("game-error-back");
 
   const FAV_KEY = "shelf.favorites";
   const LANG_KEY = "shelf.lang";
+  const SORT_KEY = "shelf.sort";
   let favorites = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || "[]"));
   let lang = localStorage.getItem(LANG_KEY) || "sv";
+  let playCounts = {};
 
   // ---------- Portal chrome translations ----------
   const STRINGS = {
@@ -54,7 +59,7 @@
     labelDescEnHint: { sv: "(engelska, valfritt)", en: "(English, optional)" },
     labelColor: { sv: "Accentfärg", en: "Accent color" },
     labelFile: { sv: "Spelfil", en: "Game file" },
-    labelFileHint: { sv: "(en enda .html-fil)", en: "(a single .html file)" },
+    labelFileHint: { sv: "(en enda .html-fil, eller .zip om spelet har flera filer)", en: "(a single .html file, or a .zip if the game has multiple files)" },
 
     announcementHint: { sv: "Visas som en banner högst upp för alla besökare tills de stänger den eller du tar bort den.", en: "Shows as a banner at the top for every visitor until they close it or you remove it." },
     labelAnnouncement: { sv: "Meddelande", en: "Message" },
@@ -71,14 +76,22 @@
     leaderboardBtn: { sv: "Topplista", en: "Leaderboard" },
     tabLeaderboards: { sv: "🏆 Topplistor", en: "🏆 Leaderboards" },
     leaderboardsHint: { sv: "Kräver Admin-nyckel. Nollställningen går inte att ångra.", en: "Requires the Admin key. Resetting cannot be undone." },
-    labelLbGame: { sv: "Spel", en: "Game" }
+    labelLbGame: { sv: "Spel", en: "Game" },
+    sortDefault: { sv: "Standard", en: "Default" },
+    sortNewest: { sv: "Senast tillagd", en: "Recently added" },
+    sortMostPlayed: { sv: "Mest spelad", en: "Most played" },
+    sortAlpha: { sv: "A–Ö", en: "A–Z" },
+    newBadge: { sv: "NY", en: "NEW" },
+    gameErrorText: { sv: "Spelet kunde inte laddas. Kolla att filerna laddats upp korrekt.", en: "The game couldn't load. Check that the files uploaded correctly." },
+    gameErrorBack: { sv: "Tillbaka till biblioteket", en: "Back to the library" }
   };
   function t(key) { return STRINGS[key][lang] || STRINGS[key].sv; }
 
   let state = {
     query: "",
     category: "all",
-    onlyFav: false
+    onlyFav: false,
+    sort: localStorage.getItem(SORT_KEY) || "default"
   };
 
   function saveFavorites() {
@@ -93,6 +106,26 @@
 
   function gameDesc(game) {
     return lang === "en" && game.descriptionEn ? game.descriptionEn : game.description;
+  }
+
+  function isNewGame(game) {
+    if (!game.addedAt) return false;
+    const added = new Date(game.addedAt).getTime();
+    if (Number.isNaN(added)) return false;
+    const days = (Date.now() - added) / (1000 * 60 * 60 * 24);
+    return days <= 7;
+  }
+
+  function sortGames(list) {
+    const sorted = [...list];
+    if (state.sort === "newest") {
+      sorted.sort((a, b) => new Date(b.addedAt || 0) - new Date(a.addedAt || 0));
+    } else if (state.sort === "mostplayed") {
+      sorted.sort((a, b) => (playCounts[b.id] || 0) - (playCounts[a.id] || 0));
+    } else if (state.sort === "alpha") {
+      sorted.sort((a, b) => a.title.localeCompare(b.title));
+    }
+    return sorted;
   }
 
   function buildCategoryPills() {
@@ -142,7 +175,7 @@
         <div class="cart-body">
           <div class="cart-top">
             <div>
-              <h3 class="cart-title">${game.title}</h3>
+              <h3 class="cart-title">${game.title}${isNewGame(game) ? `<span class="new-badge">${t("newBadge")}</span>` : ""}</h3>
               <div class="cart-tags">
                 <span class="tag">${game.category}</span>
                 <span class="cart-code">CART-${game.cart || "00"}</span>
@@ -163,7 +196,7 @@
   }
 
   function render() {
-    const filtered = GAMES.filter(matchesFilters);
+    const filtered = sortGames(GAMES.filter(matchesFilters));
     grid.innerHTML = filtered.length
       ? filtered.map(cardHTML).join("")
       : `<div class="empty-state">${t("empty")}</div>`;
@@ -171,6 +204,12 @@
     document.getElementById("stat-total").textContent = GAMES.length;
     document.getElementById("stat-fav").textContent = favorites.size;
   }
+
+  sortSelect.addEventListener("change", () => {
+    state.sort = sortSelect.value;
+    localStorage.setItem(SORT_KEY, state.sort);
+    render();
+  });
 
   grid.addEventListener("click", (e) => {
     const favBtn = e.target.closest(".fav-btn");
@@ -203,6 +242,16 @@
   });
 
   let currentGameId = null;
+  let gameLoadTimer = null;
+
+  function trackPlayCount(gameId) {
+    if (typeof WORKER_URL === "undefined" || WORKER_URL.includes("REPLACE-ME")) return;
+    fetch(`${WORKER_URL}/plays`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ game: gameId })
+    }).catch(() => {}); // fire-and-forget, fine if it fails
+  }
 
   function launchGame(id, cardEl) {
     const game = GAMES.find(g => g.id === id);
@@ -215,17 +264,34 @@
         game_category: game.category
       });
     }
+    trackPlayCount(game.id);
     if (cardEl) cardEl.classList.add("launching");
     setTimeout(() => {
+      gameError.classList.add("hidden");
+      gameFrame.classList.remove("hidden");
       playerTitle.textContent = game.title;
       gameFrame.src = `games/${game.folder}/index.html?lang=${lang}`;
       player.classList.add("open");
       if (cardEl) cardEl.classList.remove("launching");
+
+      // If the iframe hasn't finished loading within a few seconds, assume
+      // the game file is missing/broken and show a friendly fallback
+      // instead of leaving people staring at a blank frame.
+      clearTimeout(gameLoadTimer);
+      let loaded = false;
+      gameFrame.onload = () => { loaded = true; };
+      gameLoadTimer = setTimeout(() => {
+        if (!loaded) {
+          gameFrame.classList.add("hidden");
+          gameError.classList.remove("hidden");
+        }
+      }, 4000);
     }, 160);
   }
 
   function closePlayer() {
     player.classList.remove("open");
+    clearTimeout(gameLoadTimer);
     if (currentGameId && window.ShelfLeaderboard) {
       const game = GAMES.find(g => g.id === currentGameId);
       if (game) window.ShelfLeaderboard.submitScoreIfImproved(game);
@@ -235,6 +301,7 @@
   }
 
   backBtn.addEventListener("click", closePlayer);
+  gameErrorBack.addEventListener("click", closePlayer);
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && player.classList.contains("open")) closePlayer();
@@ -318,6 +385,13 @@
     setText("stats-link", "statsLink");
     setText("gh-disconnect", "disconnect");
 
+    setText("sort-opt-default", "sortDefault");
+    setText("sort-opt-newest", "sortNewest");
+    setText("sort-opt-mostplayed", "sortMostPlayed");
+    setText("sort-opt-alpha", "sortAlpha");
+    setText("game-error-text", "gameErrorText");
+    setText("game-error-back", "gameErrorBack");
+
     langButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.lang === lang));
 
     buildCategoryPills();
@@ -339,6 +413,21 @@
       applyLanguage();
     });
   });
+
+  sortSelect.value = state.sort;
+
+  async function fetchPlayCounts() {
+    if (typeof WORKER_URL === "undefined" || WORKER_URL.includes("REPLACE-ME")) return;
+    try {
+      const res = await fetch(`${WORKER_URL}/plays`);
+      if (!res.ok) return;
+      playCounts = await res.json();
+      if (state.sort === "mostplayed") render();
+    } catch (e) {
+      // Fine — sorting by most played just won't be available this session.
+    }
+  }
+  fetchPlayCounts();
 
   applyLanguage();
 

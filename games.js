@@ -21,6 +21,7 @@ const GAMES = [
     descriptionEn: "Dodge the barriers, chase the high score. One button, zero mercy.",
     color: "#4FC9C0",
     cart: "01",
+    addedAt: "2026-07-01",
     scoreKey: "neonRunnerBest",
     scoreLabel: "Poäng",
     scoreLabelEn: "Points",
@@ -58,6 +59,7 @@ const GAMES = [
     descriptionEn: "Flip, match, remember. Classic memory game, console-style.",
     color: "#E8B84B",
     cart: "02",
+    addedAt: "2026-07-01",
     scoreKey: "cartridgeMatchBestMoves",
     scoreLabel: "Drag",
     scoreLabelEn: "Moves",
@@ -85,6 +87,7 @@ const GAMES = [
     descriptionEn: "Save shots against the clock. Save mode, penalties and sudden death.",
     color: "#3ddc84",
     cart: "03",
+    addedAt: "2026-07-01",
     scoreKey: "keeperReflexRating",
     scoreLabel: "Rating",
     scoreBetter: "higher",
@@ -117,6 +120,7 @@ const GAMES = [
     descriptionEn: "Members' Room. Table games with gold, velvet and high stakes.",
     color: "#c9a24b",
     cart: "04",
+    addedAt: "2026-07-01",
     thumb: `
       <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
         <defs>

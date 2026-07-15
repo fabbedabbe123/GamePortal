@@ -9,12 +9,52 @@
 //
 // Nothing here ever sends the token anywhere except api.github.com,
 // and the token is never written into any file that gets committed.
+//
+// Game files can be a single .html, or a .zip containing an
+// index.html at its root plus any other files the game needs
+// (images, extra JS/CSS, etc) — each file in the zip is committed
+// to its own path under games/<slug>/.
 // ============================================================
 
 (function () {
   const REPO_KEY = "shelf.gh.repo";
   const TOKEN_KEY = "shelf.gh.token";
   const ADMIN_KEY_STORAGE = "shelf.worker.adminkey";
+
+  function lang() { return localStorage.getItem("shelf.lang") || "sv"; }
+  const STRINGS = {
+    connectRepoError: { sv: "Skriv repo som anvandare/repo-namn.", en: "Enter the repo as username/repo-name." },
+    connectTokenError: { sv: "Token saknas.", en: "Token is missing." },
+    submitMissingFields: { sv: "Fyll i titel, beskrivning och välj en spelfil.", en: "Fill in the title, description, and choose a game file." },
+    readingFile: { sv: "Läser filen...", en: "Reading the file..." },
+    readingZip: { sv: "Läser zip-filen...", en: "Reading the zip file..." },
+    zipNoIndex: { sv: "Zip-filen måste innehålla en index.html i roten.", en: "The zip file must contain an index.html at its root." },
+    updatingGamesJs: { sv: "Uppdaterar games.js...", en: "Updating games.js..." },
+    genericError: { sv: "Något gick fel: ", en: "Something went wrong: " },
+    announcementSending: { sv: "Skickar...", en: "Sending..." },
+    announcementSentMsg: { sv: "Skickat! Syns för alla efter att GitHub Pages byggt om (ca en minut).", en: "Sent! Everyone will see it once GitHub Pages rebuilds (about a minute)." },
+    announcementClearedMsg: { sv: "Meddelandet är borttaget.", en: "The message has been removed." },
+    announcementEmptyError: { sv: "Skriv ett meddelande först.", en: "Write a message first." },
+    feedbackLoading: { sv: "Laddar...", en: "Loading..." },
+    feedbackNotConfigured: { sv: "Worker-URL är inte konfigurerad än — se README.", en: "Worker URL isn't set up yet — see the README." },
+    feedbackNoAdminKey: { sv: "Lägg in din Admin-nyckel på anslutningssidan först.", en: "Enter your Admin key on the connect page first." },
+    feedbackNone: { sv: "Ingen feedback än.", en: "No feedback yet." },
+    feedbackError: { sv: "Kunde inte hämta feedback: ", en: "Couldn't load feedback: " },
+    lbResetLabel: { sv: "Nollställ den här topplistan", en: "Reset this leaderboard" },
+    lbConfirmReset: { sv: "Klicka igen för att bekräfta — går inte att ångra", en: "Click again to confirm — cannot be undone" },
+    lbResetting: { sv: "Nollställer...", en: "Resetting..." },
+    lbResetDone: { sv: "Topplistan är nollställd.", en: "The leaderboard has been reset." }
+  };
+  function t(key) { return STRINGS[key][lang()] || STRINGS[key].sv; }
+  function uploadingPathMsg(path) { return lang() === "en" ? `Uploading ${path}...` : `Laddar upp ${path}...`; }
+  function uploadingFileOfMsg(i, total, name) {
+    return lang() === "en" ? `Uploading file ${i} of ${total} (${name})...` : `Laddar upp fil ${i} av ${total} (${name})...`;
+  }
+  function submitSuccessMsg(title) {
+    return lang() === "en"
+      ? `Done! "${title}" has been committed to the repo. Give GitHub Pages a minute to rebuild, then it'll show up for everyone.`
+      : `Klart! "${title}" är committat till repot. Ge GitHub Pages en minut att bygga om, sedan syns det för alla.`;
+  }
 
   const overlay = document.getElementById("admin-overlay");
   const openBtn = document.getElementById("add-game-btn");
@@ -54,7 +94,7 @@
   // ---------- Tabs ----------
   document.querySelectorAll(".admin-tab").forEach(tab => {
     tab.addEventListener("click", () => {
-      document.querySelectorAll(".admin-tab").forEach(t => t.classList.toggle("active", t === tab));
+      document.querySelectorAll(".admin-tab").forEach(tb => tb.classList.toggle("active", tb === tab));
       document.querySelectorAll(".admin-tab-panel").forEach(p => {
         p.style.display = p.id === `tab-${tab.dataset.tab}` ? "flex" : "none";
       });
@@ -83,9 +123,9 @@
 
   // ---------- Keep the admin button hidden from regular visitors ----------
   // It only appears automatically once this browser is already connected.
-  // Before that, the owner reveals it once with Ctrl+Shift+A (or ⌘+Shift+A
-  // on Mac) to do the first-time setup — after that it just stays visible
-  // on that browser/device.
+  // Before that, the owner reveals it once with the secret shortcut to do
+  // the first-time setup — after that it just stays visible on that
+  // browser/device.
   function updateButtonVisibility() {
     const connected = getRepo() && getToken();
     openBtn.style.display = connected ? "inline-block" : "none";
@@ -111,12 +151,12 @@
     const token = tokenInput.value.trim();
     const adminKey = adminKeyInput.value.trim();
     if (!repo.includes("/")) {
-      connectStatus.textContent = "Skriv repo som anvandare/repo-namn.";
+      connectStatus.textContent = t("connectRepoError");
       connectStatus.className = "admin-status error";
       return;
     }
     if (!token) {
-      connectStatus.textContent = "Token saknas.";
+      connectStatus.textContent = t("connectTokenError");
       connectStatus.className = "admin-status error";
       return;
     }
@@ -157,7 +197,7 @@
       }
     });
     if (!res.ok) {
-      let msg = `GitHub svarade ${res.status}`;
+      let msg = `GitHub: ${res.status}`;
       try {
         const data = await res.json();
         if (data.message) msg = data.message;
@@ -199,6 +239,51 @@
     `;
   }
 
+  // Uploads a single self-contained .html file as games/<slug>/index.html
+  async function uploadHtmlGame(file, slug, setStatus) {
+    const fileText = await file.text();
+    const path = `games/${slug}/index.html`;
+    setStatus(uploadingPathMsg(path));
+    const existing = await getFileIfExists(path);
+    await ghApi(path, {
+      method: "PUT",
+      body: JSON.stringify({
+        message: `Add game: ${slug}`,
+        content: toBase64Utf8(fileText),
+        ...(existing ? { sha: existing.sha } : {})
+      })
+    });
+  }
+
+  // Uploads every file inside a .zip to games/<slug>/<relative-path>.
+  // Requires an index.html at the zip's root.
+  async function uploadZipGame(file, slug, setStatus) {
+    if (typeof JSZip === "undefined") {
+      throw new Error("JSZip did not load — check your internet connection and try again.");
+    }
+    const zip = await JSZip.loadAsync(file);
+    const entries = Object.entries(zip.files).filter(([, f]) => !f.dir);
+    const hasRootIndex = entries.some(([name]) => name.toLowerCase() === "index.html");
+    if (!hasRootIndex) throw new Error(t("zipNoIndex"));
+
+    let i = 0;
+    for (const [name, entry] of entries) {
+      i++;
+      setStatus(uploadingFileOfMsg(i, entries.length, name));
+      const path = `games/${slug}/${name}`;
+      const content64 = await entry.async("base64");
+      const existing = await getFileIfExists(path);
+      await ghApi(path, {
+        method: "PUT",
+        body: JSON.stringify({
+          message: `Add game asset: ${name}`,
+          content: content64,
+          ...(existing ? { sha: existing.sha } : {})
+        })
+      });
+    }
+  }
+
   submitBtn.addEventListener("click", async () => {
     const title = titleInput.value.trim();
     const category = categoryInput.value.trim() || "Övrigt";
@@ -208,37 +293,33 @@
     const file = fileInput.files[0];
 
     if (!title || !descSv || !file) {
-      submitStatus.textContent = "Fyll i titel, beskrivning och välj en spelfil.";
+      submitStatus.textContent = t("submitMissingFields");
       submitStatus.className = "admin-status error";
       return;
     }
 
     submitBtn.disabled = true;
     submitStatus.className = "admin-status pending";
-    submitStatus.textContent = "Läser filen...";
+    const setStatus = (msg) => { submitStatus.textContent = msg; };
+    setStatus(file.name.toLowerCase().endsWith(".zip") ? t("readingZip") : t("readingFile"));
 
     try {
-      const fileText = await file.text();
       const slug = slugify(title);
-      const path = `games/${slug}/index.html`;
+      const isZip = file.name.toLowerCase().endsWith(".zip");
 
-      submitStatus.textContent = `Laddar upp ${path}...`;
-      const existingGameFile = await getFileIfExists(path);
-      await ghApi(path, {
-        method: "PUT",
-        body: JSON.stringify({
-          message: `Add game: ${title}`,
-          content: toBase64Utf8(fileText),
-          ...(existingGameFile ? { sha: existingGameFile.sha } : {})
-        })
-      });
+      if (isZip) {
+        await uploadZipGame(file, slug, setStatus);
+      } else {
+        await uploadHtmlGame(file, slug, setStatus);
+      }
 
-      submitStatus.textContent = "Uppdaterar games.js...";
+      setStatus(t("updatingGamesJs"));
       const gamesFile = await ghApi("games.js");
       const gamesText = fromBase64Utf8(gamesFile.content);
       const count = (gamesText.match(/id:\s*"/g) || []).length;
       const cart = String(count + 1).padStart(2, "0");
       const thumb = generateThumb(title, color);
+      const addedAt = new Date().toISOString().slice(0, 10);
 
       const entry = `  {
     id: ${JSON.stringify(slug)},
@@ -249,12 +330,13 @@
     descriptionEn: ${JSON.stringify(descEn)},
     color: ${JSON.stringify(color)},
     cart: ${JSON.stringify(cart)},
+    addedAt: ${JSON.stringify(addedAt)},
     thumb: \`${thumb}\`
   },
 `;
 
       const insertAt = gamesText.lastIndexOf("];");
-      if (insertAt === -1) throw new Error("Hittade inte slutet av games.js — kontrollera filen manuellt.");
+      if (insertAt === -1) throw new Error("Couldn't find the end of games.js — check the file manually.");
       const newGamesText = gamesText.slice(0, insertAt) + entry + gamesText.slice(insertAt);
 
       await ghApi("games.js", {
@@ -268,12 +350,12 @@
 
       // Reflect it immediately in this session without waiting for Pages to rebuild
       if (typeof GAMES !== "undefined") {
-        GAMES.unshift({ id: slug, title, folder: slug, category, description: descSv, descriptionEn: descEn, color, cart, thumb });
+        GAMES.unshift({ id: slug, title, folder: slug, category, description: descSv, descriptionEn: descEn, color, cart, addedAt, thumb });
         if (window.ShelfPortal && window.ShelfPortal.refresh) window.ShelfPortal.refresh();
       }
 
       submitStatus.className = "admin-status success";
-      submitStatus.textContent = `Klart! "${title}" är committat till repot. Ge GitHub Pages en minut att bygga om, sedan syns det för alla.`;
+      submitStatus.textContent = submitSuccessMsg(title);
       titleInput.value = "";
       categoryInput.value = "";
       descSvInput.value = "";
@@ -281,7 +363,7 @@
       fileInput.value = "";
     } catch (err) {
       submitStatus.className = "admin-status error";
-      submitStatus.textContent = "Något gick fel: " + err.message;
+      submitStatus.textContent = t("genericError") + err.message;
     } finally {
       submitBtn.disabled = false;
     }
@@ -295,7 +377,7 @@
 
   async function writeAnnouncement(message) {
     announcementStatus.className = "admin-status pending";
-    announcementStatus.textContent = "Skickar...";
+    announcementStatus.textContent = t("announcementSending");
     try {
       const file = await getFileIfExists("announcement.json");
       const payload = { message, id: String(Date.now()) };
@@ -308,12 +390,10 @@
         })
       });
       announcementStatus.className = "admin-status success";
-      announcementStatus.textContent = message
-        ? "Skickat! Syns för alla efter att GitHub Pages byggt om (ca en minut)."
-        : "Meddelandet är borttaget.";
+      announcementStatus.textContent = message ? t("announcementSentMsg") : t("announcementClearedMsg");
     } catch (err) {
       announcementStatus.className = "admin-status error";
-      announcementStatus.textContent = "Något gick fel: " + err.message;
+      announcementStatus.textContent = t("genericError") + err.message;
     }
   }
 
@@ -321,7 +401,7 @@
     const msg = announcementText.value.trim();
     if (!msg) {
       announcementStatus.className = "admin-status error";
-      announcementStatus.textContent = "Skriv ett meddelande först.";
+      announcementStatus.textContent = t("announcementEmptyError");
       return;
     }
     writeAnnouncement(msg);
@@ -337,37 +417,38 @@
   const feedbackInbox = document.getElementById("feedback-inbox");
 
   async function loadFeedback() {
-    feedbackInbox.innerHTML = `<p class="modal-hint">Laddar...</p>`;
+    feedbackInbox.innerHTML = `<p class="modal-hint">${t("feedbackLoading")}</p>`;
     const adminKey = getAdminKey();
     if (typeof WORKER_URL === "undefined" || WORKER_URL.includes("REPLACE-ME")) {
-      feedbackInbox.innerHTML = `<p class="modal-hint">Worker-URL är inte konfigurerad än — se README.</p>`;
+      feedbackInbox.innerHTML = `<p class="modal-hint">${t("feedbackNotConfigured")}</p>`;
       return;
     }
     if (!adminKey) {
-      feedbackInbox.innerHTML = `<p class="modal-hint">Lägg in din Admin-nyckel på anslutningssidan först.</p>`;
+      feedbackInbox.innerHTML = `<p class="modal-hint">${t("feedbackNoAdminKey")}</p>`;
       return;
     }
     try {
       const res = await fetch(`${WORKER_URL}/feedback`, {
         headers: { "Authorization": `Bearer ${adminKey}` }
       });
-      if (!res.ok) throw new Error(`Worker svarade ${res.status}`);
+      if (!res.ok) throw new Error(`Worker: ${res.status}`);
       const list = await res.json();
       if (!Array.isArray(list) || list.length === 0) {
-        feedbackInbox.innerHTML = `<p class="modal-hint">Ingen feedback än.</p>`;
+        feedbackInbox.innerHTML = `<p class="modal-hint">${t("feedbackNone")}</p>`;
         return;
       }
+      const dateLocale = lang() === "en" ? "en-GB" : "sv-SE";
       feedbackInbox.innerHTML = list.map(item => `
         <div class="leaderboard-row" style="align-items:flex-start; flex-direction:column; gap:4px;">
           <div style="display:flex; justify-content:space-between; width:100%;">
             <span class="lb-name" style="font-weight:700;">${escapeHtmlLocal(item.name || "Anonym")}</span>
-            <span class="lb-score" style="font-size:11px; color:var(--muted);">${new Date(item.ts).toLocaleString("sv-SE")}</span>
+            <span class="lb-score" style="font-size:11px; color:var(--muted);">${new Date(item.ts).toLocaleString(dateLocale)}</span>
           </div>
           <div style="font-size:13px; color:var(--text);">${escapeHtmlLocal(item.message)}</div>
         </div>
       `).join("");
     } catch (err) {
-      feedbackInbox.innerHTML = `<p class="modal-hint">Kunde inte hämta feedback: ${err.message}</p>`;
+      feedbackInbox.innerHTML = `<p class="modal-hint">${t("feedbackError")}${err.message}</p>`;
     }
   }
 
@@ -375,7 +456,7 @@
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-feedbackRefresh.addEventListener("click", loadFeedback);
+  feedbackRefresh.addEventListener("click", loadFeedback);
 
   // ---------- Leaderboard reset ----------
   const lbGameSelect = document.getElementById("lb-game-select");
@@ -391,7 +472,7 @@ feedbackRefresh.addEventListener("click", loadFeedback);
 
   function resetResetButton() {
     lbResetArmed = false;
-    lbResetBtn.textContent = "Nollställ den här topplistan";
+    lbResetBtn.textContent = t("lbResetLabel");
     lbResetBtn.classList.remove("primary");
   }
 
@@ -399,18 +480,18 @@ feedbackRefresh.addEventListener("click", loadFeedback);
     const adminKey = getAdminKey();
     if (typeof WORKER_URL === "undefined" || WORKER_URL.includes("REPLACE-ME")) {
       lbResetStatus.className = "admin-status error";
-      lbResetStatus.textContent = "Worker-URL är inte konfigurerad än — se README.";
+      lbResetStatus.textContent = t("feedbackNotConfigured");
       return;
     }
     if (!adminKey) {
       lbResetStatus.className = "admin-status error";
-      lbResetStatus.textContent = "Lägg in din Admin-nyckel på anslutningssidan först.";
+      lbResetStatus.textContent = t("feedbackNoAdminKey");
       return;
     }
 
     if (!lbResetArmed) {
       lbResetArmed = true;
-      lbResetBtn.textContent = "Klicka igen för att bekräfta — går inte att ångra";
+      lbResetBtn.textContent = t("lbConfirmReset");
       lbResetBtn.classList.add("primary");
       return;
     }
@@ -419,18 +500,18 @@ feedbackRefresh.addEventListener("click", loadFeedback);
     if (!gameId) return;
 
     lbResetStatus.className = "admin-status pending";
-    lbResetStatus.textContent = "Nollställer...";
+    lbResetStatus.textContent = t("lbResetting");
     try {
       const res = await fetch(`${WORKER_URL}/scores?game=${encodeURIComponent(gameId)}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${adminKey}` }
       });
-      if (!res.ok) throw new Error(`Worker svarade ${res.status}`);
+      if (!res.ok) throw new Error(`Worker: ${res.status}`);
       lbResetStatus.className = "admin-status success";
-      lbResetStatus.textContent = "Topplistan är nollställd.";
+      lbResetStatus.textContent = t("lbResetDone");
     } catch (err) {
       lbResetStatus.className = "admin-status error";
-      lbResetStatus.textContent = "Något gick fel: " + err.message;
+      lbResetStatus.textContent = t("genericError") + err.message;
     } finally {
       resetResetButton();
     }
@@ -440,5 +521,9 @@ feedbackRefresh.addEventListener("click", loadFeedback);
     populateLeaderboardGames();
     resetResetButton();
     lbResetStatus.textContent = "";
+  });
+
+  document.addEventListener("shelf:lang-changed", () => {
+    if (lbResetBtn) resetResetButton();
   });
 })();
