@@ -306,6 +306,9 @@
       const game = GAMES.find(g => g.id === currentGameId);
       if (game) window.ShelfLeaderboard.submitScoreIfImproved(game);
     }
+    if (currentGameId && window.ShelfProfile && window.ShelfProfile.checkChallenges) {
+      window.ShelfProfile.checkChallenges(currentGameId);
+    }
     currentGameId = null;
     setTimeout(() => { gameFrame.src = ""; }, 300);
   }
@@ -450,5 +453,15 @@
 
   applyLanguage();
 
-  window.ShelfPortal = { refresh: render };
+  window.ShelfPortal = {
+    refresh: render,
+    launchGameById(id) {
+      overlay_close_if_open();
+      launchGame(id, null);
+    }
+  };
+
+  function overlay_close_if_open() {
+    document.querySelectorAll(".modal-overlay.open").forEach(el => el.classList.remove("open"));
+  }
 })();

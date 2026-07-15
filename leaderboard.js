@@ -82,10 +82,15 @@
       list.innerHTML = scores.map((entry, i) => `
         <div class="leaderboard-row ${entry.nickname === myName ? "me" : ""}">
           <span class="lb-rank">${i + 1}</span>
-          <span class="lb-name">${escapeHtml(entry.nickname)}</span>
+          <span class="lb-name" style="cursor:pointer;" data-open-profile="${escapeHtml(entry.nickname)}">${escapeHtml(entry.nickname)}</span>
           <span class="lb-score">${entry.score}${label ? " " + label : ""}</span>
         </div>
       `).join("");
+      list.querySelectorAll("[data-open-profile]").forEach(el => {
+        el.addEventListener("click", () => {
+          if (window.ShelfProfile) window.ShelfProfile.openProfile(el.dataset.openProfile);
+        });
+      });
     } catch (e) {
       list.innerHTML = `<p class="modal-hint">${t("lbError")}</p>`;
     }

@@ -219,6 +219,45 @@ felmeddelande med en "Tillbaka"-knapp istället för en tom vit ruta.
 (uppladdning, meddelanden, feedback, topplista-nollställning) växlar nu
 språk tillsammans med resten av portalen.
 
+## Utmaningar (Fas 3 — sista biten i det stora projektet)
+
+Från en väns profil, om ni redan är vänner, dyker en **Utmana**-sektion
+upp: välj ett spel (bara de med topplista) och klicka **Skicka utmaning**.
+Din nuvarande bästa poäng i det spelet blir målet de ska slå.
+
+**Helt asynkront** — ingen behöver vara inne samtidigt:
+1. Du skickar en utmaning
+2. Din vän ser den i sin profil nästa gång de besöker sidan: "[Ditt namn] — [Spel], Slå: [poäng]" med en **Spela**-knapp
+3. De klickar Spela, spelar spelet som vanligt
+4. Så fort de stänger spelet jämförs deras resultat automatiskt mot målet — ingen extra knapp att trycka
+5. Båda ser resultatet ("Du vann!"/"Du förlorade.") i sin profil under Utmaningar
+
+Historik över de senaste 5 avklarade utmaningarna visas också i profilen.
+
+**Kräver:** Worker-koden uppdaterad igen (nya `/challenges`-endpoints) —
+samma rutin som alltid.
+
+Detta var sista biten i det stora projektet: unika användarnamn → vänner
+→ utmaningar. 🎉
+
+## Vänner (Fas 2)
+
+Öppna din profil (klicka profil-knappen nere till vänster) för att:
+
+- **Lägga till en vän** — skriv in deras användarnamn längst ner, klicka **Lägg till**
+- **Acceptera/neka förfrågningar** — dyker upp högst upp i profilen om någon lagt till dig
+- **Se din vänlista** — klicka på ett namn för att se den personens profil (stats + achievements, samma vy som din egen fast utan redigeringsmöjligheter)
+- **Lägga till direkt från topplistan** — namnen i 🏆-topplistan går nu att klicka på, öppnar personens profil direkt
+
+Skickar du en förfrågan till någon som redan skickat en till dig blir ni
+vänner direkt (ingen anledning att båda ska behöva acceptera samma sak).
+
+Ingen ny Worker-uppsättning behövs utöver att uppdatera koden igen (samma
+rutin: kopiera `worker/cloudflare-worker.js`, klistra in i Cloudflare,
+Deploy) — nya `/friends`-endpoints tillkom.
+
+Nästa steg i det stora projektet: asynkrona utmaningar mellan vänner.
+
 ## Användarprofiler (Fas 1: unika användarnamn)
 
 En **profil-knapp** dyker upp nere i vänstra hörnet av portalen för alla
