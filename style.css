@@ -580,6 +580,21 @@ a { color: inherit; }
   color: var(--muted);
 }
 
+.modal-body select {
+  background: var(--surface-2);
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  outline: none;
+}
+
+.modal-body select:focus {
+  border-color: var(--accent-2);
+}
+
 .modal-hint {
   font-size: 12.5px;
   color: var(--muted);
