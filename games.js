@@ -178,5 +178,46 @@ const GAMES = [
         <circle cx="196" cy="132" r="7" fill="#ffb703"/>
       </svg>
     `
+  },
+  {
+    id: "mini-golf",
+    title: "Mini Golf",
+    folder: "mini-golf",
+    category: "Sport",
+    description: "Sex banor, fysikbaserad putting. Färre slag vinner — dra bollen bakåt och släpp för att slå.",
+    descriptionEn: "Six holes, physics-based putting. Fewest strokes wins — drag the ball back and release to putt.",
+    color: "#3ddc84",
+    cart: "06",
+    addedAt: "2026-07-16",
+    scoreKey: "miniGolfBestStrokes",
+    scoreLabel: "Slag",
+    scoreLabelEn: "Strokes",
+    scoreBetter: "lower",
+    thumb: `
+      <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="mg-bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#1f6b3a"/>
+            <stop offset="1" stop-color="#154a28"/>
+          </linearGradient>
+        </defs>
+        <rect width="320" height="200" fill="url(#mg-bg)"/>
+        <g opacity="0.08">
+          <rect x="0" y="0" width="22" height="200" fill="#ffffff"/>
+          <rect x="44" y="0" width="22" height="200" fill="#ffffff"/>
+          <rect x="88" y="0" width="22" height="200" fill="#ffffff"/>
+          <rect x="132" y="0" width="22" height="200" fill="#ffffff"/>
+          <rect x="176" y="0" width="22" height="200" fill="#ffffff"/>
+          <rect x="220" y="0" width="22" height="200" fill="#ffffff"/>
+          <rect x="264" y="0" width="22" height="200" fill="#ffffff"/>
+        </g>
+        <rect x="130" y="80" width="40" height="90" rx="20" fill="#6b4a2f" opacity="0.85"/>
+        <circle cx="245" cy="100" r="11" fill="#0b0b0b"/>
+        <line x1="245" y1="100" x2="245" y2="58" stroke="#d8d8d8" stroke-width="2"/>
+        <path d="M245 58 L268 66 L245 74 Z" fill="#e34b4b"/>
+        <circle cx="70" cy="130" r="8" fill="#f4f4f0"/>
+        <line x1="70" y1="130" x2="230" y2="104" stroke="#ffffff" stroke-width="2" stroke-dasharray="5,5" opacity="0.5"/>
+      </svg>
+    `
   }
 ];

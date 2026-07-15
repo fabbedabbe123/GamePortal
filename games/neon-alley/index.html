@@ -513,7 +513,7 @@
   </div>
 </div>
 
-<button id="modToggleBtn" class="btn ghost mono" onclick="openMod()" style="position:fixed; bottom:16px; right:16px; z-index:60; opacity:0.6; font-size:11px;">⚙️ Mod</button>
+<button id="modToggleBtn" class="btn ghost mono" onclick="openMod()" style="position:fixed; bottom:16px; right:16px; z-index:60; opacity:0.6; font-size:11px; display:none;">⚙️ Mod</button>
 
 <!-- Code gate -->
 <div class="overlay" id="ov-modauth">
@@ -749,12 +749,29 @@ function showToast(msg){
 })();
 
 /* =====================================================================
-   MOD MENU (testing helpers) — code gated
+   MOD MENU (testing helpers) — admin only
+   Uses the same "shelf.gh.token" the main portal sets once the owner
+   connects their GitHub account in the admin panel (⚙, Ctrl+Alt+C).
+   Since games are served from the same origin as the portal, this
+   localStorage key is visible here too — so only the portal owner's
+   own browser ever sees the mod button at all.
 ===================================================================== */
 const MOD_CODE = "1337";
 let modUnlocked = false;
 
+function isPortalAdmin(){
+  try { return !!localStorage.getItem("shelf.gh.token"); }
+  catch(e){ return false; }
+}
+
+function refreshModButtonVisibility(){
+  const btn = document.getElementById("modToggleBtn");
+  if (btn) btn.style.display = isPortalAdmin() ? "block" : "none";
+}
+refreshModButtonVisibility();
+
 function openMod(){
+  if(!isPortalAdmin()) return; // safety net even if someone calls this directly
   if(modUnlocked){ showModPanel(); return; }
   document.getElementById("modCodeInput").value = "";
   document.getElementById("modAuthError").style.display = "none";

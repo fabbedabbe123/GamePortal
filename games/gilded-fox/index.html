@@ -1261,7 +1261,7 @@
 
 <div class="confetti-layer" id="confettiLayer"></div>
 
-<button class="mod-access-btn" id="modAccessBtn">⚙ Back Office</button>
+<button class="mod-access-btn" id="modAccessBtn" style="display:none;">⚙ Back Office</button>
 
 <!-- PASSWORD GATE -->
 <div class="password-overlay" id="passwordOverlay">
@@ -2968,14 +2968,26 @@
   }
 
   // ---------- BACK OFFICE (mod menu) ----------
-  // Access is gated behind a visible button + password
+  // Access is gated behind the portal owner's own admin login. The main
+  // portal sets "shelf.gh.token" in localStorage once the owner connects
+  // their GitHub account (⚙, Ctrl+Alt+C) — since this game is served from
+  // the same origin, that same key is visible here, so only the owner's
+  // own browser ever sees the Back Office button at all.
   const BACKOFFICE_PASSWORD = 'fox1922';
   const backofficeOverlay = document.getElementById('backofficeOverlay');
   const passwordOverlay = document.getElementById('passwordOverlay');
   const passwordInput = document.getElementById('passwordInput');
   const passwordError = document.getElementById('passwordError');
+  const modAccessBtn = document.getElementById('modAccessBtn');
+
+  function isPortalAdmin(){
+    try { return !!localStorage.getItem('shelf.gh.token'); }
+    catch(e){ return false; }
+  }
+  if (modAccessBtn) modAccessBtn.style.display = isPortalAdmin() ? 'inline-block' : 'none';
 
   document.getElementById('modAccessBtn').addEventListener('click', ()=>{
+    if (!isPortalAdmin()) return; // safety net
     passwordInput.value = '';
     passwordError.innerHTML = '&nbsp;';
     passwordOverlay.classList.add('open');
