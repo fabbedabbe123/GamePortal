@@ -412,6 +412,36 @@
   .deal-btn:hover{ transform:translateY(-2px); }
   .deal-btn:disabled{ opacity:0.5; cursor:not-allowed; transform:none; }
 
+  .player-hands-row{
+    display:flex; gap:18px; justify-content:center; flex-wrap:wrap;
+  }
+  .hand-block.split-hand{
+    padding:10px 14px;
+    border-radius:12px;
+    border:2px solid transparent;
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .hand-block.split-hand.active{
+    border-color:var(--brass-bright);
+    background:rgba(201,162,75,0.08);
+  }
+  .hand-block.split-hand.finished{ opacity:0.55; }
+  .hand-result-tag{
+    font-size:11px;
+    margin-top:4px;
+    font-family:'Space Mono', monospace;
+  }
+  .hand-result-tag.win{ color:var(--win); }
+  .hand-result-tag.loss{ color:var(--loss); }
+
+  .insurance-row{
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    flex-wrap:wrap;
+    margin-top:14px;
+    font-size:13px;
+    color:var(--text-dim);
+  }
+
   /* ---------- DICE ---------- */
   .dice-tray{
     display:flex; gap:20px; justify-content:center;
@@ -1082,15 +1112,11 @@
         <div class="card-row" id="dealerCards"></div>
         <div class="hand-total" id="dealerTotal">&nbsp;</div>
       </div>
-      <div class="hand-block">
-        <div class="hand-label">You</div>
-        <div class="card-row" id="playerCards"></div>
-        <div class="hand-total" id="playerTotal">&nbsp;</div>
-      </div>
+      <div class="player-hands-row" id="playerHandsRow"></div>
     </div>
 
     <div class="paytable">
-      Blackjack pays <b>3:2</b> · Win pays <b>2×</b> · Push returns your stake · Dealer stands on 17
+      Blackjack pays <b>3:2</b> · Win pays <b>2×</b> · Push returns your stake · Dealer stands on 17 · Split once per hand · Insurance pays <b>2:1</b>
     </div>
 
     <div class="stake-row">
@@ -1098,9 +1124,17 @@
       <button class="deal-btn" id="dealBtn">Deal</button>
     </div>
 
+    <div class="insurance-row" id="insuranceRow" style="display:none">
+      <span>Dealer shows an Ace — take insurance?</span>
+      <button class="bet-chip" id="insuranceYesBtn">Yes</button>
+      <button class="bet-chip" id="insuranceNoBtn">No</button>
+    </div>
+
     <div class="bet-row" id="blackjackActions" style="display:none; margin-top:14px;">
       <button class="bet-chip" id="hitBtn">Hit</button>
       <button class="bet-chip" id="standBtn">Stand</button>
+      <button class="bet-chip" id="doubleBtn">Double</button>
+      <button class="bet-chip" id="splitBtn">Split</button>
     </div>
 
     <div class="result-line" id="blackjackResult"></div>
@@ -2132,20 +2166,26 @@
   const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
   const SUITS = [{s:'♠',red:false},{s:'♣',red:false},{s:'♥',red:true},{s:'♦',red:true}];
   let shoe = [];
-  let playerHand = [];
   let dealerHand = [];
-  let blackjackStakeAmt = 0;
+  let playerHands = [];     // [{ cards, stake, done, doubled, isSplit, splitAcesLock, result, cls }]
+  let activeHandIndex = 0;
+  let blackjackStakeAmt = 0; // base stake of the original (pre-split) hand
   let blackjackInRound = false;
+  let insuranceBet = 0;
 
   const dealerCardsEl = document.getElementById('dealerCards');
-  const playerCardsEl = document.getElementById('playerCards');
   const dealerTotalEl = document.getElementById('dealerTotal');
-  const playerTotalEl = document.getElementById('playerTotal');
+  const playerHandsRow = document.getElementById('playerHandsRow');
   const dealBtn = document.getElementById('dealBtn');
   const blackjackActions = document.getElementById('blackjackActions');
   const hitBtn = document.getElementById('hitBtn');
   const standBtn = document.getElementById('standBtn');
+  const doubleBtn = document.getElementById('doubleBtn');
+  const splitBtn = document.getElementById('splitBtn');
   const blackjackResult = document.getElementById('blackjackResult');
+  const insuranceRow = document.getElementById('insuranceRow');
+  const insuranceYesBtn = document.getElementById('insuranceYesBtn');
+  const insuranceNoBtn = document.getElementById('insuranceNoBtn');
 
   function buildShoe(){
     let boostedCount = 4;
@@ -2161,7 +2201,6 @@
         newShoe.push({rank, suit: suit.s, red: suit.red});
       }
     });
-    // Fisher-Yates shuffle
     for (let i=newShoe.length-1;i>0;i--){
       const j = Math.floor(Math.random()*(i+1));
       [newShoe[i], newShoe[j]] = [newShoe[j], newShoe[i]];
@@ -2180,9 +2219,9 @@
     return parseInt(card.rank, 10);
   }
 
-  function handValue(hand){
-    let total = hand.reduce((sum,c)=>sum+cardValue(c),0);
-    let aces = hand.filter(c=>c.rank==='A').length;
+  function handValue(cards){
+    let total = cards.reduce((sum,c)=>sum+cardValue(c),0);
+    let aces = cards.filter(c=>c.rank==='A').length;
     while (total > 21 && aces > 0){ total -= 10; aces--; }
     return total;
   }
@@ -2204,20 +2243,233 @@
     dealerHand.forEach((card, idx)=>{
       dealerCardsEl.appendChild(renderCard(card, idx === 1 && !revealDealer));
     });
-    playerCardsEl.innerHTML = '';
-    playerHand.forEach(card=>{
-      playerCardsEl.appendChild(renderCard(card, false));
-    });
-    playerTotalEl.textContent = `Total: ${handValue(playerHand)}`;
     dealerTotalEl.textContent = revealDealer ? `Total: ${handValue(dealerHand)}` : `Showing: ${cardValue(dealerHand[0])}`;
+
+    playerHandsRow.innerHTML = '';
+    playerHands.forEach((hand, i)=>{
+      const block = document.createElement('div');
+      block.className = 'hand-block' + (playerHands.length > 1 ? ' split-hand' : '');
+      if (playerHands.length > 1 && i === activeHandIndex && !hand.done) block.classList.add('active');
+      if (hand.done) block.classList.add('finished');
+
+      const label = document.createElement('div');
+      label.className = 'hand-label';
+      label.textContent = playerHands.length > 1 ? `Hand ${i + 1}${hand.doubled ? ' (doubled)' : ''}` : 'You';
+      block.appendChild(label);
+
+      const row = document.createElement('div');
+      row.className = 'card-row';
+      hand.cards.forEach(card => row.appendChild(renderCard(card, false)));
+      block.appendChild(row);
+
+      const total = document.createElement('div');
+      total.className = 'hand-total';
+      total.textContent = `Total: ${handValue(hand.cards)}`;
+      block.appendChild(total);
+
+      if (hand.result){
+        const tag = document.createElement('div');
+        tag.className = 'hand-result-tag ' + (hand.cls || '');
+        tag.textContent = hand.result;
+        block.appendChild(tag);
+      }
+
+      playerHandsRow.appendChild(block);
+    });
+  }
+
+  function currentHand(){ return playerHands[activeHandIndex]; }
+
+  function canDouble(hand){
+    return hand.cards.length === 2 && !hand.splitAcesLock && balance >= hand.stake;
+  }
+
+  function canSplit(hand){
+    return hand.cards.length === 2 &&
+      hand.cards[0].rank === hand.cards[1].rank &&
+      playerHands.length < 2 &&
+      balance >= hand.stake;
+  }
+
+  function updateActionButtons(){
+    const hand = currentHand();
+    doubleBtn.style.display = canDouble(hand) ? 'inline-block' : 'none';
+    splitBtn.style.display = canSplit(hand) ? 'inline-block' : 'none';
   }
 
   function endRound(message, cls){
     blackjackResult.textContent = message;
     blackjackResult.className = 'result-line ' + cls;
     blackjackActions.style.display = 'none';
+    insuranceRow.style.display = 'none';
     dealBtn.disabled = false;
     blackjackInRound = false;
+  }
+
+  // Moves on to the next unfinished hand, or starts the dealer's turn once
+  // every hand is done (busted, stood, or completed a double).
+  function advanceOrDealerTurn(){
+    let next = activeHandIndex + 1;
+    while (next < playerHands.length && playerHands[next].done) next++;
+    if (next < playerHands.length){
+      activeHandIndex = next;
+      renderHands(false);
+      updateActionButtons();
+      return;
+    }
+    dealerTurn();
+  }
+
+  function dealerTurn(){
+    blackjackActions.style.display = 'none';
+    // If every hand already busted, no need for the dealer to draw further —
+    // still reveal the hole card for transparency.
+    const anyStillIn = playerHands.some(h => handValue(h.cards) <= 21);
+    renderHands(true);
+    if (!anyStillIn){
+      resolveAllHands();
+      return;
+    }
+
+    function dealerStep(){
+      const dealerTotal = handValue(dealerHand);
+      if (dealerTotal < 17){
+        dealerHand.push(drawCard());
+        playFlip();
+        renderHands(true);
+        setTimeout(dealerStep, 500);
+        return;
+      }
+      resolveAllHands();
+    }
+    setTimeout(dealerStep, 400);
+  }
+
+  function resolveAllHands(){
+    const dealerTotal = handValue(dealerHand);
+    const dealerBust = dealerTotal > 21;
+    let totalStaked = 0;
+    let totalPayout = 0;
+    const parts = [];
+
+    playerHands.forEach((hand, i)=>{
+      const playerTotal = handValue(hand.cards);
+      totalStaked += hand.stake;
+      const label = playerHands.length > 1 ? `Hand ${i + 1}: ` : '';
+
+      if (playerTotal > 21){
+        hand.result = 'Bust'; hand.cls = 'loss';
+        parts.push(`${label}bust at ${playerTotal}`);
+      } else if (dealerBust){
+        const payout = hand.stake * 2;
+        totalPayout += payout;
+        hand.result = `Win ${formatMoney(payout)}`; hand.cls = 'win';
+        parts.push(`${label}win ${formatMoney(payout)} (dealer bust)`);
+      } else if (playerTotal > dealerTotal){
+        const payout = hand.stake * 2;
+        totalPayout += payout;
+        hand.result = `Win ${formatMoney(payout)}`; hand.cls = 'win';
+        parts.push(`${label}${playerTotal} beats ${dealerTotal}, win ${formatMoney(payout)}`);
+      } else if (playerTotal === dealerTotal){
+        totalPayout += hand.stake;
+        hand.result = 'Push'; hand.cls = '';
+        parts.push(`${label}push at ${playerTotal}`);
+      } else {
+        hand.result = 'Loss'; hand.cls = 'loss';
+        parts.push(`${label}${playerTotal} loses to ${dealerTotal}`);
+      }
+    });
+
+    balance += totalPayout;
+    renderBalance();
+    renderHands(true);
+
+    playerHands.forEach(hand => {
+      recordRound(hand.stake, hand.cls === 'win' ? hand.stake * 2 : (hand.cls === '' ? hand.stake : 0), { game: 'blackjack' });
+    });
+
+    const overallCls = totalPayout > totalStaked ? 'win' : (totalPayout === totalStaked ? '' : 'loss');
+    endRound(parts.join(' · ') + (dealerBust ? ` — dealer busts at ${dealerTotal}.` : ` — dealer has ${dealerTotal}.`), overallCls);
+  }
+
+  function startHandActions(){
+    blackjackActions.style.display = 'flex';
+    updateActionButtons();
+  }
+
+  function checkNaturalsAndStart(){
+    const hand = playerHands[0];
+    const playerBJ = hand.cards.length === 2 && handValue(hand.cards) === 21;
+    const dealerBJ = handValue(dealerHand) === 21;
+
+    if (playerBJ || dealerBJ){
+      renderHands(true);
+      if (playerBJ && dealerBJ){
+        balance += hand.stake;
+        renderBalance();
+        recordRound(hand.stake, hand.stake, { game: 'blackjack' });
+        endRound('Both hold blackjack. Push — your stake is returned.', '');
+      } else if (playerBJ){
+        const payout = Math.round(hand.stake * 2.5);
+        balance += payout;
+        renderBalance();
+        recordRound(hand.stake, payout, { game: 'blackjack', detail: 'naturalBlackjack' });
+        endRound(`Blackjack! You win ${formatMoney(payout)} chips.`, 'win');
+      } else {
+        recordRound(hand.stake, 0, { game: 'blackjack' });
+        endRound('Dealer holds blackjack. House keeps the stake.', 'loss');
+      }
+      return;
+    }
+
+    startHandActions();
+  }
+
+  function offerInsurance(){
+    insuranceRow.style.display = 'flex';
+    blackjackActions.style.display = 'none';
+    const insuranceCost = Math.floor(playerHands[0].stake / 2);
+    insuranceYesBtn.disabled = insuranceCost > balance || insuranceCost <= 0;
+
+    function settle(tookInsurance){
+      insuranceRow.style.display = 'none';
+      insuranceBet = 0;
+      if (tookInsurance){
+        insuranceBet = insuranceCost;
+        balance -= insuranceCost;
+        renderBalance();
+      }
+
+      const dealerBJ = handValue(dealerHand) === 21;
+      if (dealerBJ && insuranceBet > 0){
+        const insurancePayout = insuranceBet * 3; // stake back + 2:1 win
+        balance += insurancePayout;
+        renderBalance();
+      }
+
+      if (dealerBJ){
+        renderHands(true);
+        const hand = playerHands[0];
+        const playerBJ = handValue(hand.cards) === 21;
+        const insuranceNote = insuranceBet > 0 ? ' Insurance pays out.' : '';
+        if (playerBJ){
+          balance += hand.stake;
+          renderBalance();
+          recordRound(hand.stake, hand.stake, { game: 'blackjack' });
+          endRound('Both hold blackjack. Push on your main bet.' + insuranceNote, '');
+        } else {
+          recordRound(hand.stake, 0, { game: 'blackjack' });
+          endRound('Dealer holds blackjack.' + insuranceNote, insuranceBet > 0 ? '' : 'loss');
+        }
+        return;
+      }
+
+      // No dealer blackjack — insurance (if taken) is lost, play continues.
+      checkNaturalsAndStart();
+    }
+
+    insuranceYesBtn.onclick = () => settle(true);
+    insuranceNoBtn.onclick = () => settle(false);
   }
 
   dealBtn.addEventListener('click', ()=>{
@@ -2244,95 +2496,96 @@
     blackjackResult.className = 'result-line';
 
     if (shoe.length < 15) shoe = buildShoe();
-    playerHand = [drawCard(), drawCard()];
+    playerHands = [{ cards: [drawCard(), drawCard()], stake, done: false, doubled: false, isSplit: false, splitAcesLock: false, result: null, cls: '' }];
+    activeHandIndex = 0;
     dealerHand = [drawCard(), drawCard()];
     renderHands(false);
     playFlip();
 
-    const playerBJ = handValue(playerHand) === 21;
-    const dealerBJ = handValue(dealerHand) === 21;
-
-    if (playerBJ || dealerBJ){
-      renderHands(true);
-      if (playerBJ && dealerBJ){
-        balance += blackjackStakeAmt;
-        renderBalance();
-        recordRound(blackjackStakeAmt, blackjackStakeAmt, { game: 'blackjack' });
-        endRound('Both hold blackjack. Push — your stake is returned.', '');
-      } else if (playerBJ){
-        const payout = Math.round(blackjackStakeAmt * 2.5);
-        balance += payout;
-        renderBalance();
-        recordRound(blackjackStakeAmt, payout, { game: 'blackjack', detail: 'naturalBlackjack' });
-        endRound(`Blackjack! You win ${formatMoney(payout)} chips.`, 'win');
-      } else {
-        recordRound(blackjackStakeAmt, 0, { game: 'blackjack' });
-        endRound('Dealer holds blackjack. House keeps the stake.', 'loss');
-      }
+    if (dealerHand[0].rank === 'A'){
+      offerInsurance();
       return;
     }
 
-    blackjackActions.style.display = 'flex';
+    checkNaturalsAndStart();
   });
 
   hitBtn.addEventListener('click', ()=>{
     if (!blackjackInRound) return;
-    playerHand.push(drawCard());
+    const hand = currentHand();
+    hand.cards.push(drawCard());
     playFlip();
-    const total = handValue(playerHand);
+    const total = handValue(hand.cards);
     renderHands(false);
-    if (total > 21){
-      renderHands(true);
-      recordRound(blackjackStakeAmt, 0, { game: 'blackjack' });
-      endRound(`Bust at ${total}. House keeps the stake.`, 'loss');
+    if (total >= 21){
+      hand.done = true;
+      advanceOrDealerTurn();
+    } else {
+      updateActionButtons();
     }
   });
 
   standBtn.addEventListener('click', ()=>{
     if (!blackjackInRound) return;
-    blackjackActions.style.display = 'none';
-    let dealerTotal = handValue(dealerHand);
-    renderHands(true);
+    currentHand().done = true;
+    advanceOrDealerTurn();
+  });
 
-    function dealerStep(){
-      dealerTotal = handValue(dealerHand);
-      if (dealerTotal < 17){
-        dealerHand.push(drawCard());
-        playFlip();
-        renderHands(true);
-        setTimeout(dealerStep, 500);
-        return;
-      }
-      resolveStand();
+  doubleBtn.addEventListener('click', ()=>{
+    if (!blackjackInRound) return;
+    const hand = currentHand();
+    if (!canDouble(hand)) return;
+    balance -= hand.stake;
+    hand.stake *= 2;
+    hand.doubled = true;
+    renderBalance();
+    hand.cards.push(drawCard());
+    playFlip();
+    hand.done = true;
+    renderHands(false);
+    advanceOrDealerTurn();
+  });
+
+  splitBtn.addEventListener('click', ()=>{
+    if (!blackjackInRound) return;
+    const hand = currentHand();
+    if (!canSplit(hand)) return;
+
+    const isAceSplit = hand.cards[0].rank === 'A';
+    const secondCard = hand.cards.pop();
+    balance -= hand.stake;
+    renderBalance();
+
+    const newHand = {
+      cards: [secondCard, drawCard()],
+      stake: hand.stake,
+      done: false,
+      doubled: false,
+      isSplit: true,
+      splitAcesLock: isAceSplit,
+      result: null,
+      cls: ''
+    };
+    hand.cards.push(drawCard());
+    hand.isSplit = true;
+    hand.splitAcesLock = isAceSplit;
+
+    playerHands.splice(activeHandIndex + 1, 0, newHand);
+    playFlip();
+    renderHands(false);
+
+    // Split aces conventionally get exactly one card each and can't be
+    // hit further — resolve that immediately by marking both hands done
+    // once each has its second card, at which point advanceOrDealerTurn
+    // moves things along on its own.
+    if (isAceSplit){
+      hand.done = true;
+      newHand.done = true;
+      advanceOrDealerTurn();
+      return;
     }
 
-    function resolveStand(){
-      const playerTotal = handValue(playerHand);
-      dealerTotal = handValue(dealerHand);
-      if (dealerTotal > 21){
-        const payout = blackjackStakeAmt * 2;
-        balance += payout;
-        renderBalance();
-        recordRound(blackjackStakeAmt, payout, { game: 'blackjack' });
-        endRound(`Dealer busts at ${dealerTotal}. You win ${formatMoney(payout)} chips.`, 'win');
-      } else if (playerTotal > dealerTotal){
-        const payout = blackjackStakeAmt * 2;
-        balance += payout;
-        renderBalance();
-        recordRound(blackjackStakeAmt, payout, { game: 'blackjack' });
-        endRound(`You have ${playerTotal}, dealer has ${dealerTotal}. You win ${formatMoney(payout)} chips.`, 'win');
-      } else if (playerTotal === dealerTotal){
-        balance += blackjackStakeAmt;
-        renderBalance();
-        recordRound(blackjackStakeAmt, blackjackStakeAmt, { game: 'blackjack' });
-        endRound(`Push at ${playerTotal}. Your stake is returned.`, '');
-      } else {
-        recordRound(blackjackStakeAmt, 0, { game: 'blackjack' });
-        endRound(`You have ${playerTotal}, dealer has ${dealerTotal}. House keeps the stake.`, 'loss');
-      }
-    }
-
-    setTimeout(dealerStep, 400);
+    updateActionButtons();
   });
 
   // ---------- DICE ----------
