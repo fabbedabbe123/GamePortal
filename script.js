@@ -68,7 +68,10 @@
     statsLink: { sv: "Öppna Google Analytics", en: "Open Google Analytics" },
 
     disconnect: { sv: "Koppla från GitHub", en: "Disconnect from GitHub" },
-    leaderboardBtn: { sv: "Topplista", en: "Leaderboard" }
+    leaderboardBtn: { sv: "Topplista", en: "Leaderboard" },
+    tabLeaderboards: { sv: "🏆 Topplistor", en: "🏆 Leaderboards" },
+    leaderboardsHint: { sv: "Kräver Admin-nyckel. Nollställningen går inte att ångra.", en: "Requires the Admin key. Resetting cannot be undone." },
+    labelLbGame: { sv: "Spel", en: "Game" }
   };
   function t(key) { return STRINGS[key][lang] || STRINGS[key].sv; }
 
@@ -308,6 +311,9 @@
     setText("announcement-clear", "announcementClear");
 
     setText("feedback-refresh", "feedbackRefresh");
+    setText("tab-btn-leaderboards", "tabLeaderboards");
+    setText("leaderboards-hint", "leaderboardsHint");
+    setText("label-lb-game", "labelLbGame");
     setText("stats-hint", "statsHint");
     setText("stats-link", "statsLink");
     setText("gh-disconnect", "disconnect");
