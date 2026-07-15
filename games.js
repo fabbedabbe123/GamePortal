@@ -142,5 +142,41 @@ const GAMES = [
         <circle cx="141" cy="150" r="10" fill="#3e8e7e" stroke="#e6c876" stroke-width="1.5"/>
       </svg>
     `
+  },
+  {
+    id: "neon-alley",
+    title: "Neon Alley",
+    folder: "neon-alley",
+    category: "Arcade",
+    description: "En hel arkadhall: mullvadsjakt, breakout, korgkastning och en myntautomat. Samla poletter, tjäna tickets, köp uppgraderingar.",
+    descriptionEn: "A whole arcade hall: whack-a-mole, breakout, basketball shootout, and a coin pusher. Earn tokens, win tickets, buy upgrades.",
+    color: "#ff3f8e",
+    cart: "05",
+    addedAt: "2026-07-15",
+    thumb: `
+      <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="na-bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#1a1030"/>
+            <stop offset="1" stop-color="#0b0714"/>
+          </linearGradient>
+        </defs>
+        <rect width="320" height="200" fill="url(#na-bg)"/>
+        <circle cx="40" cy="24" r="4" fill="#ffb703" opacity="0.9"/>
+        <circle cx="80" cy="20" r="4" fill="#ff3f8e" opacity="0.9"/>
+        <circle cx="120" cy="24" r="4" fill="#2de2ff" opacity="0.9"/>
+        <circle cx="200" cy="24" r="4" fill="#39ff88" opacity="0.9"/>
+        <circle cx="240" cy="20" r="4" fill="#ff3f8e" opacity="0.9"/>
+        <circle cx="280" cy="24" r="4" fill="#ffb703" opacity="0.9"/>
+        <rect x="110" y="60" width="100" height="90" rx="6" fill="#241640" stroke="#2de2ff" stroke-width="2"/>
+        <rect x="122" y="70" width="76" height="46" rx="3" fill="#0b0714" stroke="#ff3f8e" stroke-width="1.5"/>
+        <circle cx="145" cy="93" r="10" fill="none" stroke="#39ff88" stroke-width="2"/>
+        <circle cx="175" cy="93" r="6" fill="#ffb703"/>
+        <circle cx="140" cy="132" r="10" fill="#1a1030" stroke="#2de2ff" stroke-width="2"/>
+        <rect x="137" y="105" width="6" height="26" fill="#2de2ff"/>
+        <circle cx="180" cy="132" r="7" fill="#ff3f8e"/>
+        <circle cx="196" cy="132" r="7" fill="#ffb703"/>
+      </svg>
+    `
   }
 ];
