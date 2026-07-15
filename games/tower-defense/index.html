@@ -47,7 +47,8 @@
   canvas{ display:block; border-radius:10px; background:#16321f; box-shadow:0 20px 50px -20px rgba(0,0,0,0.7); }
 
   #shop{
-    width:150px; background:var(--panel); border:1px solid var(--stroke); border-radius:10px;
+    width:160px; height:480px; overflow-y:auto;
+    background:var(--panel); border:1px solid var(--stroke); border-radius:10px;
     padding:10px; display:flex; flex-direction:column; gap:8px;
   }
   #shop h3{ margin:0 0 2px; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
@@ -97,6 +98,7 @@
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:12px; text-align:center; padding:24px;
   }
+  .hidden{ display:none !important; }
   .overlay.hidden{ display:none; }
   .overlay h2{ margin:0; font-size:22px; letter-spacing:0.5px; }
   .overlay p{ margin:0; color:var(--muted); font-size:13px; max-width:340px; line-height:1.6; }
@@ -213,6 +215,22 @@
       <span class="name">🎯 Sniper</span>
       <span class="cost">150 gold</span>
     </button>
+    <button class="tower-btn" data-tower="laser">
+      <span class="name">🔴 Laser Array</span>
+      <span class="cost">180 gold</span>
+    </button>
+    <button class="tower-btn" data-tower="tesla">
+      <span class="name">⚡ Tesla Coil</span>
+      <span class="cost">140 gold</span>
+    </button>
+    <button class="tower-btn" data-tower="mortar">
+      <span class="name">🪨 Mortar</span>
+      <span class="cost">220 gold</span>
+    </button>
+    <button class="tower-btn" data-tower="poison">
+      <span class="name">☠️ Poison Spire</span>
+      <span class="cost">110 gold</span>
+    </button>
 
     <div id="towerInfo">
       <div class="row"><span id="tiName">—</span><span id="tiLevel">Level 1</span></div>
@@ -288,6 +306,10 @@
     cannon: () => { tone(140, 0.15, 'sawtooth', 0.12); tone(90, 0.2, 'sine', 0.1, 0.02); },
     frost: () => tone(1400, 0.08, 'sine', 0.07),
     sniper: () => tone(1800, 0.05, 'square', 0.08),
+    laser: () => tone(2200, 0.03, 'sawtooth', 0.035),
+    tesla: () => { tone(1600, 0.04, 'square', 0.06); tone(2400, 0.03, 'square', 0.04, 0.02); },
+    mortar: () => { tone(100, 0.25, 'sawtooth', 0.15); tone(60, 0.3, 'sine', 0.12, 0.05); },
+    poison: () => tone(500, 0.06, 'triangle', 0.06),
     death: () => tone(220, 0.12, 'sine', 0.09),
     leak: () => tone(150, 0.25, 'sawtooth', 0.12),
     waveStart: () => { tone(440, 0.12, 'triangle', 0.15); tone(660, 0.15, 'triangle', 0.15, 0.12); },
@@ -447,7 +469,11 @@
     turret: { name:'Machine Gun', cost:50, damage:8, range:90, fireRate:400, color:'#4fc9c0', splash:0, slow:0, sfx:'turret' },
     cannon: { name:'Cannon', cost:100, damage:26, range:80, fireRate:1000, color:'#e8b84b', splash:40, slow:0, sfx:'cannon' },
     frost:  { name:'Frost Tower', cost:80, damage:4, range:100, fireRate:600, color:'#7fd4ff', splash:0, slow:0.5, sfx:'frost' },
-    sniper: { name:'Sniper', cost:150, damage:60, range:220, fireRate:1500, color:'#c084fc', splash:0, slow:0, sfx:'sniper' }
+    sniper: { name:'Sniper', cost:150, damage:60, range:220, fireRate:1500, color:'#c084fc', splash:0, slow:0, sfx:'sniper' },
+    laser:  { name:'Laser Array', cost:180, damage:5, range:130, fireRate:120, color:'#ff4d6d', splash:0, slow:0, beam:true, sfx:'laser' },
+    tesla:  { name:'Tesla Coil', cost:140, damage:14, range:110, fireRate:700, color:'#7fffea', splash:0, slow:0, chain:3, sfx:'tesla' },
+    mortar: { name:'Mortar', cost:220, damage:45, range:260, minRange:60, fireRate:1800, color:'#8a6b4f', splash:65, slow:0, sfx:'mortar' },
+    poison: { name:'Poison Spire', cost:110, damage:3, range:95, fireRate:500, color:'#9dff4f', splash:0, slow:0, poisonDps:7, poisonDuration:3000, sfx:'poison' }
   };
 
   /* ===================== ENEMY TYPES (10 total) ===================== */
@@ -470,7 +496,7 @@
 
   /* ===================== STATE ===================== */
   let gold, lives, wave, speedMult, running, armedTower, selectedTower;
-  let towers = [], enemies = [], projectiles = [], particles = [];
+  let towers = [], enemies = [], projectiles = [], particles = [], beams = [];
   let waveInProgress = false;
   let waveCountdown = 0;
   let spawnQueue = [];
@@ -519,6 +545,7 @@
     enemies = [];
     projectiles = [];
     particles = [];
+    beams = [];
     waveInProgress = false;
     waveCountdown = 0;
     armedTower = null;
@@ -649,7 +676,7 @@
       if (wave >= 10) unlockAchievement('wave10', 'Reached wave 10');
       if (wave >= 20) unlockAchievement('wave20', 'Reached wave 20');
       if (wave >= 30) unlockAchievement('wave30', 'Reached wave 30');
-      if (builtTowerTypesThisRun.size >= 4) unlockAchievement('allTowers', 'Built every tower type in one run');
+      if (builtTowerTypesThisRun.size >= 8) unlockAchievement('allTowers', 'Built every tower type in one run');
 
       nextWaveBtn.disabled = false;
       nextWaveBtn.textContent = `Start wave ${wave + 1}`;
@@ -669,7 +696,7 @@
       color: stats.color, r: stats.r, slowTimer: 0,
       shield: stats.shield || 0, maxShield: stats.shield || 0,
       regen: !!stats.regen, splits: !!stats.splits, flying: !!stats.flying,
-      regenTimer: 0
+      regenTimer: 0, poisonTimer: 0, poisonDps: 0
     });
   }
 
@@ -689,6 +716,11 @@
           e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.04);
           e.regenTimer = 0;
         }
+      }
+
+      if (e.poisonTimer > 0){
+        e.hp -= (e.poisonDps || 0) * dt * 0.001;
+        e.poisonTimer -= dt;
       }
 
       if (e.dist >= pathTotalLen){
@@ -765,13 +797,17 @@
       t.cooldown -= dt;
       if (t.cooldown > 0) return;
       const range = towerRange(t);
+      const type = TOWER_TYPES[t.type];
+      const minRange = type.minRange || 0;
       let target = null, bestDist = -1;
       enemies.forEach(e=>{
         const pos = pointAtDistance(e.dist);
         const d = Math.hypot(pos.x-t.x, pos.y-t.y);
-        if (d <= range && e.dist > bestDist){ bestDist = e.dist; target = e; }
+        if (d <= range && d >= minRange && e.dist > bestDist){ bestDist = e.dist; target = e; }
       });
       if (target){
+        const tpos = pointAtDistance(target.dist);
+        t.facingAngle = Math.atan2(tpos.y - t.y, tpos.x - t.x);
         fireProjectile(t, target);
         t.cooldown = towerFireRate(t);
       }
@@ -782,10 +818,45 @@
     const type = TOWER_TYPES[t.type];
     sfx[type.sfx] && sfx[type.sfx]();
     if (t.type === 'cannon') triggerShake(3, 120);
+    if (t.type === 'mortar') triggerShake(5, 150);
     if (t.isMega) triggerShake(4, 140);
+
+    if (type.beam){
+      const tpos = pointAtDistance(target.dist);
+      applyDamage(target, towerDamage(t));
+      beams.push({ x1:t.x, y1:t.y, x2:tpos.x, y2:tpos.y, color:type.color, life:120, maxLife:120 });
+      return;
+    }
+
+    if (type.chain){
+      let current = target;
+      const hit = new Set();
+      let dmg = towerDamage(t);
+      let fromX = t.x, fromY = t.y;
+      for (let i=0;i<type.chain && current;i++){
+        applyDamage(current, dmg);
+        hit.add(current);
+        const cpos = pointAtDistance(current.dist);
+        beams.push({ x1:fromX, y1:fromY, x2:cpos.x, y2:cpos.y, color:type.color, life:130, maxLife:130 });
+        fromX = cpos.x; fromY = cpos.y;
+        let next = null, bestD = 90;
+        enemies.forEach(e=>{
+          if (hit.has(e)) return;
+          const epos = pointAtDistance(e.dist);
+          const d = Math.hypot(epos.x-fromX, epos.y-fromY);
+          if (d < bestD){ bestD = d; next = e; }
+        });
+        current = next;
+        dmg *= 0.75;
+      }
+      return;
+    }
+
     projectiles.push({
       x: t.x, y: t.y, target, damage: towerDamage(t),
-      splash: type.splash, slow: type.slow, color: type.color, speed: 7
+      splash: type.splash, slow: type.slow,
+      poisonDps: type.poisonDps, poisonDuration: type.poisonDuration,
+      color: type.color, speed: t.type === 'mortar' ? 4.5 : 7
     });
   }
 
@@ -799,6 +870,10 @@
       if (d < 8){
         applyDamage(p.target, p.damage);
         if (p.slow) p.target.slowTimer = 1.5;
+        if (p.poisonDps){
+          p.target.poisonDps = Math.max(p.target.poisonDps || 0, p.poisonDps);
+          p.target.poisonTimer = p.poisonDuration;
+        }
         if (p.splash > 0){
           enemies.forEach(e=>{
             if (e === p.target) return;
@@ -811,6 +886,13 @@
       }
       p.x += (dx/d) * p.speed * dt * 0.3;
       p.y += (dy/d) * p.speed * dt * 0.3;
+    }
+  }
+
+  function updateBeams(dt){
+    for (let i = beams.length - 1; i >= 0; i--){
+      beams[i].life -= dt;
+      if (beams[i].life <= 0) beams.splice(i,1);
     }
   }
 
@@ -947,40 +1029,138 @@
   function drawTowers(){
     towers.forEach(t=>{
       const type = TOWER_TYPES[t.type];
-      const radius = t.isMega ? 19 : 13;
-      if (t === selectedTower){
-        ctx.beginPath();
-        ctx.arc(t.x, t.y, towerRange(t), 0, Math.PI*2);
-        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
+      const scale = t.isMega ? 1.5 : (1 + (t.level-1) * 0.18);
+      const angle = t.facingAngle || 0;
+
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, towerRange(t), 0, Math.PI*2);
+      ctx.strokeStyle = t === selectedTower ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
       if (t.isMega){
         ctx.beginPath();
-        ctx.arc(t.x, t.y, radius+5, 0, Math.PI*2);
+        ctx.arc(t.x, t.y, 24, 0, Math.PI*2);
         ctx.strokeStyle = 'rgba(232,184,75,0.6)';
         ctx.lineWidth = 2;
         ctx.stroke();
       }
+
+      ctx.save();
+      ctx.translate(t.x, t.y);
       ctx.beginPath();
-      ctx.arc(t.x, t.y, radius, 0, Math.PI*2);
-      ctx.fillStyle = type.color;
+      ctx.arc(0, 0, 15*scale, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.fill();
-      ctx.strokeStyle = t.isMega ? '#e8b84b' : 'rgba(0,0,0,0.4)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+
+      ctx.rotate(angle);
+      drawTowerBody(t.type, scale, type.color);
+      ctx.restore();
+
       if (t.isMega){
-        ctx.fillStyle = '#0b0b0b';
-        ctx.font = 'bold 11px sans-serif';
+        ctx.fillStyle = '#e8b84b';
+        ctx.font = 'bold 12px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('★', t.x, t.y+4);
+        ctx.fillText('★', t.x, t.y - 20);
       } else if (t.level > 1){
-        ctx.fillStyle = '#0b0b0b';
+        ctx.fillStyle = '#fff';
         ctx.font = 'bold 9px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(String(t.level), t.x, t.y+3);
+        ctx.fillText(String(t.level), t.x, t.y + 22);
       }
     });
+  }
+
+  function drawTowerBody(type, scale, color){
+    ctx.fillStyle = color;
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx.lineWidth = 1.5;
+
+    switch(type){
+      case 'turret': {
+        ctx.beginPath(); ctx.arc(0,0,9*scale,0,Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.fillRect(4*scale, -6*scale, 14*scale, 3.5*scale);
+        ctx.fillRect(4*scale, 2.5*scale, 14*scale, 3.5*scale);
+        break;
+      }
+      case 'cannon': {
+        ctx.beginPath(); ctx.arc(0,0,10*scale,0,Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.fillRect(2*scale, -6*scale, 18*scale, 12*scale);
+        ctx.beginPath(); ctx.arc(20*scale, 0, 6*scale, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+        break;
+      }
+      case 'frost': {
+        ctx.beginPath(); ctx.arc(0,0,9*scale,0,Math.PI*2); ctx.fill(); ctx.stroke();
+        for (let i=0;i<4;i++){
+          const a = (Math.PI/2)*i + Math.PI/4;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a)*6*scale, Math.sin(a)*6*scale);
+          ctx.lineTo(Math.cos(a-0.25)*17*scale, Math.sin(a-0.25)*17*scale);
+          ctx.lineTo(Math.cos(a+0.25)*17*scale, Math.sin(a+0.25)*17*scale);
+          ctx.closePath();
+          ctx.fill();
+        }
+        break;
+      }
+      case 'sniper': {
+        ctx.beginPath(); ctx.arc(0,0,8*scale,0,Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.fillRect(3*scale, -2.5*scale, 27*scale, 5*scale);
+        ctx.beginPath(); ctx.arc(10*scale, -6*scale, 3*scale, 0, Math.PI*2); ctx.fill();
+        break;
+      }
+      case 'laser': {
+        ctx.beginPath(); ctx.arc(0,0,9*scale,0,Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(5*scale, -8*scale);
+        ctx.lineTo(21*scale, 0);
+        ctx.lineTo(5*scale, 8*scale);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+      case 'tesla': {
+        ctx.beginPath(); ctx.arc(0,0,9*scale,0,Math.PI*2); ctx.fill(); ctx.stroke();
+        for (let r=6;r<=16;r+=5){
+          ctx.beginPath();
+          ctx.arc(0,0,r*scale,0.3,Math.PI*1.6);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        break;
+      }
+      case 'mortar': {
+        ctx.beginPath(); ctx.arc(0,0,11*scale,0,Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-6*scale, 9*scale);
+        ctx.lineTo(6*scale, 9*scale);
+        ctx.lineTo(10*scale, -9*scale);
+        ctx.lineTo(-10*scale, -9*scale);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+      case 'poison': {
+        ctx.beginPath(); ctx.arc(0,0,9*scale,0,Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-5*scale,-11*scale);
+        ctx.lineTo(5*scale,-11*scale);
+        ctx.lineTo(9*scale,9*scale);
+        ctx.lineTo(-9*scale,9*scale);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.beginPath(); ctx.arc(-2*scale,2*scale,1.6*scale,0,Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(3*scale,-2*scale,1.2*scale,0,Math.PI*2); ctx.fill();
+        break;
+      }
+      default: {
+        ctx.beginPath(); ctx.arc(0,0,10*scale,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      }
+    }
   }
 
   function drawEnemies(){
@@ -1078,7 +1258,7 @@
     document.getElementById('bossBarFill').style.width = `${Math.max(0, (boss.hp/boss.maxHp)*100)}%`;
   }
 
-  function render(){
+  function render(dt){
     ctx.save();
     if (shakeTime > 0){
       const dx = (Math.random()-0.5) * shakeMag;
@@ -1091,9 +1271,24 @@
     drawTowers();
     drawEnemies();
     drawProjectiles();
+    drawBeams();
+    drawParticles(dt);
     drawPlacementPreview();
     ctx.restore();
     updateBossBar();
+  }
+
+  function drawBeams(){
+    beams.forEach(b=>{
+      ctx.globalAlpha = Math.max(0, b.life / b.maxLife);
+      ctx.strokeStyle = b.color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(b.x1, b.y1);
+      ctx.lineTo(b.x2, b.y2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    });
   }
 
   /* ===================== MAIN LOOP ===================== */
@@ -1122,9 +1317,9 @@
       if (waveCountdown <= 0) startNextWave();
     }
 
-    drawParticles(dtRaw);
+    updateBeams(dtRaw);
     if (shakeTime > 0){ shakeTime -= dtRaw; if (shakeTime <= 0) shakeMag = 0; }
-    render();
+    render(dtRaw);
     renderTowerInfo();
   }
 
