@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHELF</title>
+<meta name="description" content="En egen spelportal — samla och spela dina spel på ett ställe.">
+<meta property="og:title" content="SHELF">
+<meta property="og:description" content="Din egen spelportal — samla och spela dina spel på ett ställe.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23e8b84b'/%3E%3Cstop offset='1' stop-color='%234fc9c0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Georgia,serif' font-size='28' font-weight='700' text-anchor='middle' fill='%2312141c'%3ES%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">SH</div>
+      <div class="brand-text">
+        <h1>Shelf</h1>
+        <span id="game-count-label">- Designad av Fabbe</span>
+      </div>
+    </div>
+    <div class="stats">
+      <div><b id="stat-total">0</b><span id="stat-total-label">spel</span></div>
+      <div><b id="stat-fav">0</b><span id="stat-fav-label">favoriter</span></div>
+      <div><b id="stat-cat">0</b><span id="stat-cat-label">kategorier</span></div>
+    </div>
+    <div class="lang-toggle" id="lang-toggle">
+      <button data-lang="sv" id="lang-sv">🇸🇪 SV</button>
+      <button data-lang="en" id="lang-en">🇬🇧 EN</button>
+    </div>
+    <button class="add-game-btn" id="add-game-btn" style="display:none">⚙ <span id="add-game-label">Lägg till spel</span></button>
+  </div>
+
+  <div class="controls">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" id="search" placeholder="Sök bland dina spel...">
+    </div>
+    <select id="sort-select">
+      <option value="default" id="sort-opt-default">Standard</option>
+      <option value="newest" id="sort-opt-newest">Senast tillagd</option>
+      <option value="mostplayed" id="sort-opt-mostplayed">Mest spelad</option>
+      <option value="alpha" id="sort-opt-alpha">A–Ö</option>
+    </select>
+    <div class="pill-row" id="category-pills"></div>
+    <div class="pill fav-pill" id="fav-toggle">★ <span id="fav-toggle-label">Favoriter</span></div>
+  </div>
+
+  <div class="section-label" id="section-label">Ditt bibliotek</div>
+  <div class="grid" id="grid"></div>
+
+  <footer class="site-footer">Designed by Fabbe</footer>
+
+</div>
+
+<div class="player" id="player">
+  <div class="player-bar">
+    <div class="left">
+      <button class="back-btn" id="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        <span id="back-btn-label">Tillbaka</span>
+      </button>
+      <span class="player-title" id="player-title"></span>
+    </div>
+    <button class="icon-btn" id="fullscreen-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+    </button>
+  </div>
+  <iframe id="game-frame" src="" allow="fullscreen; gamepad; autoplay"></iframe>
+  <div class="game-error hidden" id="game-error">
+    <p id="game-error-text">Spelet kunde inte laddas. Kolla att filerna laddats upp korrekt.</p>
+    <button class="modal-btn primary" id="game-error-back">Tillbaka till biblioteket</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="admin-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="admin-title">Admin</h2>
+      <button class="icon-btn" id="admin-close">✕</button>
+    </div>
+
+    <div class="modal-body" id="admin-connect-step">
+      <p class="modal-hint" id="connect-hint-1">
+        Det här kopplar portalen till ditt GitHub-repo, så att spel och
+        meddelanden du lägger till här hamnar direkt i repot och dyker upp
+        för alla som besöker sidan (efter att GitHub Pages byggt om, oftast
+        under en minut).
+      </p>
+      <p class="modal-hint modal-warn" id="connect-hint-2">
+        Token sparas bara lokalt i den här webbläsaren. Dela den aldrig med
+        någon. Skapa helst en "fine-grained" token med behörighet begränsad
+        till bara det här repot (Contents: Read and write) — se README för
+        instruktioner.
+      </p>
+      <label id="label-repo">GitHub repo <span class="label-hint" id="label-repo-hint">(t.ex. dittnamn/game-portal)</span></label>
+      <input type="text" id="gh-repo" placeholder="dittnamn/game-portal">
+      <label id="label-token">Personal Access Token</label>
+      <input type="password" id="gh-token" placeholder="ghp_...">
+      <label id="label-adminkey">Admin-nyckel <span class="label-hint" id="label-adminkey-hint">(valfritt — krävs bara för Feedback-fliken, se README)</span></label>
+      <input type="password" id="worker-admin-key" placeholder="Samma som ADMIN_KEY i din Cloudflare Worker">
+      <button class="modal-btn primary" id="gh-save">Spara & fortsätt</button>
+      <div class="admin-status" id="connect-status"></div>
+    </div>
+
+    <div id="admin-dashboard" style="display:none">
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="add-game" id="tab-btn-add-game">+ Spel</button>
+        <button class="admin-tab" data-tab="announcement" id="tab-btn-announcement">📢 Meddelande</button>
+        <button class="admin-tab" data-tab="feedback" id="tab-btn-feedback">💬 Feedback</button>
+        <button class="admin-tab" data-tab="leaderboards" id="tab-btn-leaderboards">🏆 Topplistor</button>
+        <button class="admin-tab" data-tab="codes" id="tab-btn-codes">🎟 Koder</button>
+        <button class="admin-tab" data-tab="managegames" id="tab-btn-managegames">✏️ Hantera spel</button>
+        <button class="admin-tab" data-tab="stats" id="tab-btn-stats">📊 Statistik</button>
+      </div>
+
+      <div class="modal-body admin-tab-panel" id="tab-add-game">
+        <label id="label-title">Titel</label>
+        <input type="text" id="game-title" placeholder="Mitt Spel">
+
+        <label id="label-category">Kategori</label>
+        <input type="text" id="game-category" list="cat-list" placeholder="Arcade, Puzzle, Sport...">
+        <datalist id="cat-list"></datalist>
+
+        <label id="label-desc-sv">Beskrivning (svenska)</label>
+        <textarea id="game-desc-sv" rows="2" placeholder="Kort beskrivning som visas på kortet"></textarea>
+
+        <label id="label-desc-en">Description <span class="label-hint" id="label-desc-en-hint">(engelska, valfritt)</span></label>
+        <textarea id="game-desc-en" rows="2" placeholder="Leave blank to reuse the Swedish text"></textarea>
+
+        <label id="label-color">Accentfärg</label>
+        <input type="color" id="game-color" value="#4fc9c0">
+
+        <label id="label-file">Spelfil <span class="label-hint" id="label-file-hint">(en enda .html-fil, eller .zip om spelet har flera filer)</span></label>
+        <input type="file" id="game-file" accept=".html,.zip">
+
+        <button class="modal-btn primary" id="game-submit">Ladda upp & publicera</button>
+        <div class="admin-status" id="submit-status"></div>
+      </div>
+
+      <div class="modal-body admin-tab-panel" id="tab-announcement" style="display:none">
+        <p class="modal-hint" id="announcement-hint">Visas som en banner högst upp för alla besökare tills de stänger den eller du tar bort den.</p>
+        <label id="label-announcement">Meddelande</label>
+        <textarea id="announcement-text" rows="3" placeholder="T.ex. Scheduled restart 20:00 ikväll"></textarea>
+        <button class="modal-btn primary" id="announcement-send">Skicka till alla</button>
+        <button class="modal-btn ghost" id="announcement-clear">Ta bort meddelande</button>
+        <div class="admin-status" id="announcement-status"></div>
+      </div>
+
+      <div class="modal-body admin-tab-panel" id="tab-feedback" style="display:none">
+        <p class="modal-hint" id="feedback-tab-hint">Kräver Admin-nyckel (samma sida där du la in GitHub-token) och att Worker-URL är satt i <code>worker-config.js</code>.</p>
+        <button class="modal-btn primary" id="feedback-refresh">Uppdatera</button>
+        <div id="feedback-inbox" class="leaderboard-list"></div>
+      </div>
+
+      <div class="modal-body admin-tab-panel" id="tab-leaderboards" style="display:none">
+        <p class="modal-hint" id="leaderboards-hint">Kräver Admin-nyckel. Nollställningen går inte att ångra.</p>
+        <label id="label-lb-game">Spel</label>
+        <select id="lb-game-select"></select>
+        <button class="modal-btn ghost" id="lb-reset-btn">Nollställ den här topplistan</button>
+        <div class="admin-status" id="lb-reset-status"></div>
+      </div>
+
+      <div class="modal-body admin-tab-panel" id="tab-codes" style="display:none">
+        <p class="modal-hint" id="codes-hint">Kräver Admin-nyckel. Skapar en engångskod som ger valuta i ett spel — dela koden med en kompis, den funkar bara en gång.</p>
+        <label id="label-code-game">Spel</label>
+        <select id="code-game-select">
+          <option value="neon-alley">Neon Alley</option>
+          <option value="gilded-fox">The Gilded Fox</option>
+        </select>
+        <label id="label-code-currency">Valuta</label>
+        <select id="code-currency-select">
+          <option value="tokens">Poletter</option>
+          <option value="tickets">Tickets</option>
+        </select>
+        <label id="label-code-amount">Belopp</label>
+        <input type="number" id="code-amount" value="50" min="1">
+        <button class="modal-btn primary" id="code-generate-btn">Skapa kod</button>
+        <div class="admin-status" id="code-generate-status"></div>
+        <div id="code-result" style="display:none; margin-top:6px;">
+          <label id="label-code-result">Din kod</label>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="text" id="code-result-value" readonly style="flex:1; font-family:var(--font-mono); font-size:16px; text-align:center; letter-spacing:2px;">
+            <button class="modal-btn ghost" id="code-copy-btn" style="margin:0;">Kopiera</button>
+          </div>
+        </div>
+        <button class="modal-btn ghost" id="code-refresh-btn">Visa senaste koderna</button>
+        <div id="code-history" class="leaderboard-list"></div>
+      </div>
+
+      <div class="modal-body admin-tab-panel" id="tab-managegames" style="display:none">
+        <p class="modal-hint" id="managegames-hint">Redigera ett befintligt spels titel/beskrivning/färg, eller stäng av åtkomst tillfälligt (t.ex. medan du uppdaterar spelfilen).</p>
+        <label id="label-mg-game">Spel</label>
+        <select id="mg-game-select"></select>
+
+        <label id="label-mg-title">Titel</label>
+        <input type="text" id="mg-title">
+
+        <label id="label-mg-category">Kategori</label>
+        <input type="text" id="mg-category">
+
+        <label id="label-mg-desc-sv">Beskrivning (svenska)</label>
+        <textarea id="mg-desc-sv" rows="2"></textarea>
+
+        <label id="label-mg-desc-en">Description (engelska)</label>
+        <textarea id="mg-desc-en" rows="2"></textarea>
+
+        <label id="label-mg-color">Accentfärg</label>
+        <input type="color" id="mg-color">
+
+        <div class="checkbox-row" style="display:flex; align-items:center; gap:8px; margin-top:12px;">
+          <input type="checkbox" id="mg-disabled-toggle" style="width:auto;">
+          <label id="label-mg-disabled" style="margin:0; text-transform:none; font-size:13px; color:var(--text);">Inaktiverad (dold för besökare)</label>
+        </div>
+
+        <button class="modal-btn primary" id="mg-save-btn">Spara ändringar</button>
+        <div class="admin-status" id="mg-status"></div>
+      </div>
+
+      <div class="modal-body admin-tab-panel" id="tab-stats" style="display:none">
+        <p class="modal-hint" id="stats-hint">Full statistik (besökare, sessioner, vilka spel som spelas) finns i Google Analytics egen dashboard.</p>
+        <a class="modal-btn primary" id="stats-link" href="https://analytics.google.com/" target="_blank" rel="noopener" style="display:block; text-align:center; text-decoration:none;">Öppna Google Analytics</a>
+      </div>
+
+      <div class="modal-body" style="padding-top:0;">
+        <button class="modal-btn ghost" id="gh-disconnect">Koppla från GitHub</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="worker-config.js"></script>
+<script src="games.js"></script>
+<script src="script.js"></script>
+<script src="games-admin.js"></script>
+<script src="analytics.js"></script>
+<script src="leaderboard.js"></script>
+<script src="community.js"></script>
+<script src="profile.js"></script>
+</body>
+</html>
