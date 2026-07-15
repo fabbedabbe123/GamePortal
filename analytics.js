@@ -13,7 +13,7 @@
 // works exactly the same either way.
 // ============================================================
 
-const GA_MEASUREMENT_ID = "G-XXXXXXXXXX"; // <-- replace with your own
+const GA_MEASUREMENT_ID = "G-0BYME9MGKH"; // <-- replace with your own
 
 (function () {
   if (!GA_MEASUREMENT_ID || GA_MEASUREMENT_ID === "G-XXXXXXXXXX") return;
