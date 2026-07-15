@@ -594,7 +594,7 @@
     if (!el) {
       el = document.createElement("button");
       el.id = "profile-corner";
-      el.addEventListener("click", openProfile);
+      el.addEventListener("click", () => openProfile());
       document.body.appendChild(el);
     }
     const username = getUsername();
