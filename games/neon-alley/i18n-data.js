@@ -106,6 +106,17 @@ const GAME_I18N = [
   { sv: "ÅTKOMSTKOD", en: "ACCESS CODE" },
   { sv: "UPPGRADERINGAR", en: "UPGRADES" },
   { sv: "Utanför 🏀", en: "Miss 🏀" },
+  { sv: "LÖS IN KOD", en: "REDEEM CODE" },
+  { sv: "Har du fått en engångskod? Ange den här.", en: "Got a one-time code? Enter it here." },
+  { sv: "🎁 Lös in kod", en: "🎁 Redeem code" },
+  { sv: "Koden är redan använd.", en: "That code has already been used." },
+  { sv: "Den koden är inte för det här spelet.", en: "That code isn't for this game." },
+  { sv: "Ogiltig kod.", en: "Invalid code." },
+  { sv: "Kunde inte nå servern just nu — testa igen om en stund.", en: "Couldn't reach the server right now — try again in a bit." },
+  { sv: "Koder är inte påslaget än på den här sidan.", en: "Codes aren't turned on for this site yet." },
+  { sv: "Lös in", en: "Redeem" },
+  { sv: " inlöst!", en: " redeemed!" },
+  { sv: "KOD...", en: "CODE..." },
   { sv: "Kod...", en: "Code..." },
   { sv: " 🏆 Nytt rekord!", en: " 🏆 New record!" }
 ];

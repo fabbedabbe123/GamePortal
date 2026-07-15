@@ -44,7 +44,14 @@
     lbResetLabel: { sv: "Nollställ den här topplistan", en: "Reset this leaderboard" },
     lbConfirmReset: { sv: "Klicka igen för att bekräfta — går inte att ångra", en: "Click again to confirm — cannot be undone" },
     lbResetting: { sv: "Nollställer...", en: "Resetting..." },
-    lbResetDone: { sv: "Topplistan är nollställd.", en: "The leaderboard has been reset." }
+    lbResetDone: { sv: "Topplistan är nollställd.", en: "The leaderboard has been reset." },
+    codeInvalidAmount: { sv: "Ange ett belopp större än 0.", en: "Enter an amount greater than 0." },
+    codeGenerating: { sv: "Skapar kod...", en: "Creating code..." },
+    codeCreated: { sv: "Klart! Dela koden med en kompis — den funkar bara en gång.", en: "Done! Share the code with a friend — it only works once." },
+    codeCopied: { sv: "Kopierad!", en: "Copied!" },
+    codeNoneYet: { sv: "Inga koder skapade än.", en: "No codes created yet." },
+    codeUsed: { sv: "använd", en: "used" },
+    codeUnused: { sv: "oanvänd", en: "unused" }
   };
   function t(key) { return STRINGS[key][lang()] || STRINGS[key].sv; }
   function uploadingPathMsg(path) { return lang() === "en" ? `Uploading ${path}...` : `Laddar upp ${path}...`; }
@@ -556,5 +563,124 @@
 
   document.addEventListener("shelf:lang-changed", () => {
     if (lbResetBtn) resetResetButton();
+    if (codeCurrencySelect) populateCurrencyOptions();
   });
+
+  // ---------- Currency codes ----------
+  const codeGameSelect = document.getElementById("code-game-select");
+  const codeCurrencySelect = document.getElementById("code-currency-select");
+  const codeAmountInput = document.getElementById("code-amount");
+  const codeGenerateBtn = document.getElementById("code-generate-btn");
+  const codeGenerateStatus = document.getElementById("code-generate-status");
+  const codeResult = document.getElementById("code-result");
+  const codeResultValue = document.getElementById("code-result-value");
+  const codeCopyBtn = document.getElementById("code-copy-btn");
+  const codeRefreshBtn = document.getElementById("code-refresh-btn");
+  const codeHistory = document.getElementById("code-history");
+
+  const CURRENCIES_BY_GAME = {
+    "neon-alley": [
+      { value: "tokens", sv: "Poletter", en: "Tokens" },
+      { value: "tickets", sv: "Tickets", en: "Tickets" }
+    ],
+    "gilded-fox": [
+      { value: "chips", sv: "Marker (chips)", en: "Chips" }
+    ]
+  };
+
+  function populateCurrencyOptions(){
+    const options = CURRENCIES_BY_GAME[codeGameSelect.value] || [];
+    codeCurrencySelect.innerHTML = options.map(o => `<option value="${o.value}">${lang() === "en" ? o.en : o.sv}</option>`).join("");
+  }
+  codeGameSelect.addEventListener("change", populateCurrencyOptions);
+  populateCurrencyOptions();
+
+  codeGenerateBtn.addEventListener("click", async () => {
+    const adminKey = getAdminKey();
+    if (typeof WORKER_URL === "undefined" || WORKER_URL.includes("REPLACE-ME")) {
+      codeGenerateStatus.className = "admin-status error";
+      codeGenerateStatus.textContent = t("feedbackNotConfigured");
+      return;
+    }
+    if (!adminKey) {
+      codeGenerateStatus.className = "admin-status error";
+      codeGenerateStatus.textContent = t("feedbackNoAdminKey");
+      return;
+    }
+    const game = codeGameSelect.value;
+    const currency = codeCurrencySelect.value;
+    const amount = parseInt(codeAmountInput.value, 10);
+    if (!amount || amount <= 0){
+      codeGenerateStatus.className = "admin-status error";
+      codeGenerateStatus.textContent = t("codeInvalidAmount");
+      return;
+    }
+
+    codeGenerateStatus.className = "admin-status pending";
+    codeGenerateStatus.textContent = t("codeGenerating");
+    codeResult.style.display = "none";
+    try {
+      const res = await fetch(`${WORKER_URL}/codes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${adminKey}` },
+        body: JSON.stringify({ game, currency, amount })
+      });
+      if (!res.ok) throw new Error(`Worker: ${res.status}`);
+      const data = await res.json();
+      codeResultValue.value = data.code;
+      codeResult.style.display = "block";
+      codeGenerateStatus.className = "admin-status success";
+      codeGenerateStatus.textContent = t("codeCreated");
+    } catch (err) {
+      codeGenerateStatus.className = "admin-status error";
+      codeGenerateStatus.textContent = t("genericError") + err.message;
+    }
+  });
+
+  codeCopyBtn.addEventListener("click", () => {
+    codeResultValue.select();
+    try {
+      document.execCommand("copy");
+      codeGenerateStatus.className = "admin-status success";
+      codeGenerateStatus.textContent = t("codeCopied");
+    } catch (e) {
+      // Selecting the text is still enough for a manual copy if this fails
+    }
+  });
+
+  async function loadCodeHistory(){
+    codeHistory.innerHTML = `<p class="modal-hint">${t("feedbackLoading")}</p>`;
+    const adminKey = getAdminKey();
+    if (typeof WORKER_URL === "undefined" || WORKER_URL.includes("REPLACE-ME")) {
+      codeHistory.innerHTML = `<p class="modal-hint">${t("feedbackNotConfigured")}</p>`;
+      return;
+    }
+    if (!adminKey) {
+      codeHistory.innerHTML = `<p class="modal-hint">${t("feedbackNoAdminKey")}</p>`;
+      return;
+    }
+    try {
+      const res = await fetch(`${WORKER_URL}/codes`, {
+        headers: { "Authorization": `Bearer ${adminKey}` }
+      });
+      if (!res.ok) throw new Error(`Worker: ${res.status}`);
+      const list = await res.json();
+      if (!Array.isArray(list) || list.length === 0) {
+        codeHistory.innerHTML = `<p class="modal-hint">${t("codeNoneYet")}</p>`;
+        return;
+      }
+      codeHistory.innerHTML = list.map(item => `
+        <div class="leaderboard-row">
+          <span class="lb-name" style="font-family:var(--font-mono);">${item.code}</span>
+          <span class="lb-score" style="font-size:11px; color:${item.used ? 'var(--muted)' : 'var(--accent)'};">
+            ${item.game} · ${item.amount} ${item.currency} · ${item.used ? t("codeUsed") : t("codeUnused")}
+          </span>
+        </div>
+      `).join("");
+    } catch (err) {
+      codeHistory.innerHTML = `<p class="modal-hint">${t("feedbackError")}${err.message}</p>`;
+    }
+  }
+
+  codeRefreshBtn.addEventListener("click", loadCodeHistory);
 })();

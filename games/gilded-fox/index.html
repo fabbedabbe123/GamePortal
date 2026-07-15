@@ -1030,6 +1030,7 @@
     <div class="label">Balance</div>
     <div class="amount" id="balance">1,000</div>
   </div>
+  <button class="mod-access-btn" id="redeemOpenBtn" style="position:static; margin-left:12px;" onclick="openRedeem()">🎁 Redeem code</button>
   <div class="multiplier" id="multiplierDisplay"></div>
 </div>
 
@@ -1264,6 +1265,19 @@
 <button class="mod-access-btn" id="modAccessBtn" style="display:none;">⚙ Back Office</button>
 
 <!-- PASSWORD GATE -->
+<div class="password-overlay" id="redeemOverlay">
+  <div class="password-box">
+    <h2>Redeem Code</h2>
+    <p class="hint">Got a one-time code? Enter it below.</p>
+    <input type="text" id="redeemCodeInput" placeholder="CODE" autocomplete="off" style="text-transform:uppercase;">
+    <div class="password-error" id="redeemError">&nbsp;</div>
+    <div class="row-btns">
+      <button class="apply" id="redeemSubmitBtn">Redeem</button>
+      <button class="close" id="cancelRedeem">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="password-overlay" id="passwordOverlay">
   <div class="password-box">
     <h2>Staff Access</h2>
@@ -3018,6 +3032,65 @@
     if (e.target === passwordOverlay) passwordOverlay.classList.remove('open');
   });
 
+  // ---------- REDEEM CODE (one-time currency codes, WORKER_URL from ../../worker-config.js) ----------
+  const redeemOverlay = document.getElementById('redeemOverlay');
+  const redeemCodeInput = document.getElementById('redeemCodeInput');
+  const redeemError = document.getElementById('redeemError');
+  const redeemSubmitBtn = document.getElementById('redeemSubmitBtn');
+
+  window.openRedeem = function(){
+    redeemCodeInput.value = '';
+    redeemError.innerHTML = '&nbsp;';
+    redeemOverlay.classList.add('open');
+    redeemCodeInput.focus();
+  };
+
+  async function submitRedeemCode(){
+    const code = redeemCodeInput.value.trim().toUpperCase();
+    redeemError.innerHTML = '&nbsp;';
+    if (!code) return;
+
+    if (typeof WORKER_URL === 'undefined' || WORKER_URL.includes('REPLACE-ME')){
+      redeemError.textContent = 'Codes are not set up on this site yet.';
+      return;
+    }
+
+    redeemSubmitBtn.disabled = true;
+    try {
+      const res = await fetch(`${WORKER_URL}/codes/redeem`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, game: 'gilded-fox' })
+      });
+      const data = await res.json();
+      if (!res.ok){
+        redeemError.textContent = data.error === 'already used' ? 'That code has already been used.'
+          : data.error === 'wrong game' ? "That code isn't for this game."
+          : 'Invalid code.';
+        return;
+      }
+      balance += data.amount;
+      renderBalance();
+      saveGame();
+      redeemOverlay.classList.remove('open');
+    } catch (e){
+      redeemError.textContent = 'Could not reach the server — try again in a bit.';
+    } finally {
+      redeemSubmitBtn.disabled = false;
+    }
+  }
+
+  redeemSubmitBtn.addEventListener('click', submitRedeemCode);
+  redeemCodeInput.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter') submitRedeemCode();
+  });
+  document.getElementById('cancelRedeem').addEventListener('click', ()=>{
+    redeemOverlay.classList.remove('open');
+  });
+  redeemOverlay.addEventListener('click', (e)=>{
+    if (e.target === redeemOverlay) redeemOverlay.classList.remove('open');
+  });
+
   document.getElementById('closeBackoffice').addEventListener('click', ()=>{
     backofficeOverlay.classList.remove('open');
   });
@@ -3135,6 +3208,8 @@
 
 })();
 </script>
+
+<script src="../../worker-config.js"></script>
 
 </body>
 </html>

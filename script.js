@@ -66,7 +66,7 @@
     announcementSend: { sv: "Skicka till alla", en: "Send to everyone" },
     announcementClear: { sv: "Ta bort meddelande", en: "Remove message" },
 
-    feedbackTabHint: { sv: "Kräver Admin-nyckel (samma sida där du la in GitHub-token) och att Worker-URL är satt i leaderboard.js.", en: "Requires the Admin key (same page where you entered the GitHub token) and a Worker URL set in leaderboard.js." },
+    feedbackTabHint: { sv: "Kräver Admin-nyckel (samma sida där du la in GitHub-token) och att Worker-URL är satt i worker-config.js.", en: "Requires the Admin key (same page where you entered the GitHub token) and a Worker URL set in worker-config.js." },
     feedbackRefresh: { sv: "Uppdatera", en: "Refresh" },
 
     statsHint: { sv: "Full statistik (besökare, sessioner, vilka spel som spelas) finns i Google Analytics egen dashboard.", en: "Full stats (visitors, sessions, which games get played) live in Google Analytics' own dashboard." },
@@ -77,6 +77,15 @@
     tabLeaderboards: { sv: "🏆 Topplistor", en: "🏆 Leaderboards" },
     leaderboardsHint: { sv: "Kräver Admin-nyckel. Nollställningen går inte att ångra.", en: "Requires the Admin key. Resetting cannot be undone." },
     labelLbGame: { sv: "Spel", en: "Game" },
+    tabCodes: { sv: "🎟 Koder", en: "🎟 Codes" },
+    codesHint: { sv: "Kräver Admin-nyckel. Skapar en engångskod som ger valuta i ett spel — dela koden med en kompis, den funkar bara en gång.", en: "Requires the Admin key. Creates a one-time code that grants currency in a game — share it with a friend, it only works once." },
+    labelCodeGame: { sv: "Spel", en: "Game" },
+    labelCodeCurrency: { sv: "Valuta", en: "Currency" },
+    labelCodeAmount: { sv: "Belopp", en: "Amount" },
+    codeGenerateBtn: { sv: "Skapa kod", en: "Create code" },
+    labelCodeResult: { sv: "Din kod", en: "Your code" },
+    codeCopyBtn: { sv: "Kopiera", en: "Copy" },
+    codeRefreshBtn: { sv: "Visa senaste koderna", en: "Show recent codes" },
     sortDefault: { sv: "Standard", en: "Default" },
     sortNewest: { sv: "Senast tillagd", en: "Recently added" },
     sortMostPlayed: { sv: "Mest spelad", en: "Most played" },
@@ -381,6 +390,15 @@
     setText("tab-btn-leaderboards", "tabLeaderboards");
     setText("leaderboards-hint", "leaderboardsHint");
     setText("label-lb-game", "labelLbGame");
+    setText("tab-btn-codes", "tabCodes");
+    setText("codes-hint", "codesHint");
+    setText("label-code-game", "labelCodeGame");
+    setText("label-code-currency", "labelCodeCurrency");
+    setText("label-code-amount", "labelCodeAmount");
+    setText("code-generate-btn", "codeGenerateBtn");
+    setText("label-code-result", "labelCodeResult");
+    setText("code-copy-btn", "codeCopyBtn");
+    setText("code-refresh-btn", "codeRefreshBtn");
     setText("stats-hint", "statsHint");
     setText("stats-link", "statsLink");
     setText("gh-disconnect", "disconnect");

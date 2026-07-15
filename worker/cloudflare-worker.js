@@ -145,6 +145,69 @@ export default {
         return json({ ok: true });
       }
 
+      // ---------- Currency codes: create one (admin only) ----------
+      if (url.pathname === "/codes" && request.method === "POST") {
+        const auth = request.headers.get("Authorization") || "";
+        if (auth !== `Bearer ${env.ADMIN_KEY}`) return json({ error: "unauthorized" }, 401);
+        const body = await request.json();
+        const game = String(body.game || "").slice(0, 60);
+        const currency = String(body.currency || "").slice(0, 30);
+        const amount = Number(body.amount);
+        if (!game || !currency || !Number.isFinite(amount) || amount <= 0) {
+          return json({ error: "invalid payload" }, 400);
+        }
+
+        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous chars
+        let code = "";
+        for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+
+        const record = { code, game, currency, amount, used: false, createdAt: Date.now() };
+        await env.SHELF_KV.put(`code:${code}`, JSON.stringify(record));
+
+        let log = JSON.parse((await env.SHELF_KV.get("codes:log")) || "[]");
+        log.unshift(record);
+        log = log.slice(0, 100);
+        await env.SHELF_KV.put("codes:log", JSON.stringify(log));
+
+        return json({ ok: true, code });
+      }
+
+      // ---------- Currency codes: list recent ones (admin only) ----------
+      if (url.pathname === "/codes" && request.method === "GET") {
+        const auth = request.headers.get("Authorization") || "";
+        if (auth !== `Bearer ${env.ADMIN_KEY}`) return json({ error: "unauthorized" }, 401);
+        const log = JSON.parse((await env.SHELF_KV.get("codes:log")) || "[]");
+        return json(log);
+      }
+
+      // ---------- Currency codes: redeem (public, one-time use) ----------
+      if (url.pathname === "/codes/redeem" && request.method === "POST") {
+        if (!(await checkRateLimit(env, request, "redeem", 20, 600))) {
+          return json({ error: "too many requests, slow down" }, 429);
+        }
+        const body = await request.json();
+        const code = String(body.code || "").trim().toUpperCase();
+        const game = String(body.game || "");
+        if (!code) return json({ error: "missing code" }, 400);
+
+        const key = `code:${code}`;
+        const raw = await env.SHELF_KV.get(key);
+        if (!raw) return json({ error: "invalid code" }, 404);
+        const data = JSON.parse(raw);
+        if (data.used) return json({ error: "already used" }, 410);
+        if (data.game !== game) return json({ error: "wrong game" }, 400);
+
+        data.used = true;
+        data.usedAt = Date.now();
+        await env.SHELF_KV.put(key, JSON.stringify(data));
+
+        let log = JSON.parse((await env.SHELF_KV.get("codes:log")) || "[]");
+        log = log.map(e => (e.code === code ? { ...e, used: true } : e));
+        await env.SHELF_KV.put("codes:log", JSON.stringify(log));
+
+        return json({ ok: true, currency: data.currency, amount: data.amount });
+      }
+
       return json({ error: "not found" }, 404);
     } catch (err) {
       return json({ error: err.message || "server error" }, 500);

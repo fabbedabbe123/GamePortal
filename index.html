@@ -115,6 +115,7 @@
         <button class="admin-tab" data-tab="announcement" id="tab-btn-announcement">📢 Meddelande</button>
         <button class="admin-tab" data-tab="feedback" id="tab-btn-feedback">💬 Feedback</button>
         <button class="admin-tab" data-tab="leaderboards" id="tab-btn-leaderboards">🏆 Topplistor</button>
+        <button class="admin-tab" data-tab="codes" id="tab-btn-codes">🎟 Koder</button>
         <button class="admin-tab" data-tab="stats" id="tab-btn-stats">📊 Statistik</button>
       </div>
 
@@ -152,7 +153,7 @@
       </div>
 
       <div class="modal-body admin-tab-panel" id="tab-feedback" style="display:none">
-        <p class="modal-hint" id="feedback-tab-hint">Kräver Admin-nyckel (samma sida där du la in GitHub-token) och att Worker-URL är satt i <code>leaderboard.js</code>.</p>
+        <p class="modal-hint" id="feedback-tab-hint">Kräver Admin-nyckel (samma sida där du la in GitHub-token) och att Worker-URL är satt i <code>worker-config.js</code>.</p>
         <button class="modal-btn primary" id="feedback-refresh">Uppdatera</button>
         <div id="feedback-inbox" class="leaderboard-list"></div>
       </div>
@@ -163,6 +164,33 @@
         <select id="lb-game-select"></select>
         <button class="modal-btn ghost" id="lb-reset-btn">Nollställ den här topplistan</button>
         <div class="admin-status" id="lb-reset-status"></div>
+      </div>
+
+      <div class="modal-body admin-tab-panel" id="tab-codes" style="display:none">
+        <p class="modal-hint" id="codes-hint">Kräver Admin-nyckel. Skapar en engångskod som ger valuta i ett spel — dela koden med en kompis, den funkar bara en gång.</p>
+        <label id="label-code-game">Spel</label>
+        <select id="code-game-select">
+          <option value="neon-alley">Neon Alley</option>
+          <option value="gilded-fox">The Gilded Fox</option>
+        </select>
+        <label id="label-code-currency">Valuta</label>
+        <select id="code-currency-select">
+          <option value="tokens">Poletter</option>
+          <option value="tickets">Tickets</option>
+        </select>
+        <label id="label-code-amount">Belopp</label>
+        <input type="number" id="code-amount" value="50" min="1">
+        <button class="modal-btn primary" id="code-generate-btn">Skapa kod</button>
+        <div class="admin-status" id="code-generate-status"></div>
+        <div id="code-result" style="display:none; margin-top:6px;">
+          <label id="label-code-result">Din kod</label>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="text" id="code-result-value" readonly style="flex:1; font-family:var(--font-mono); font-size:16px; text-align:center; letter-spacing:2px;">
+            <button class="modal-btn ghost" id="code-copy-btn" style="margin:0;">Kopiera</button>
+          </div>
+        </div>
+        <button class="modal-btn ghost" id="code-refresh-btn">Visa senaste koderna</button>
+        <div id="code-history" class="leaderboard-list"></div>
       </div>
 
       <div class="modal-body admin-tab-panel" id="tab-stats" style="display:none">
@@ -178,6 +206,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="worker-config.js"></script>
 <script src="games.js"></script>
 <script src="script.js"></script>
 <script src="games-admin.js"></script>

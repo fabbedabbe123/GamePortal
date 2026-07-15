@@ -117,7 +117,7 @@ kan inte ta emot data från alla som spelar.
    lösenord du hittar på → kryssa **Encrypt** → **Save and deploy**
 7. Kopiera din Workers-URL (visas högst upp, ser ut som
    `https://shelf-backend.dittnamn.workers.dev`)
-8. Öppna `leaderboard.js` i portal-mappen, ersätt:
+8. Öppna `worker-config.js` i portal-mappen, ersätt:
    ```js
    const WORKER_URL = "https://REPLACE-ME.workers.dev";
    ```
@@ -209,7 +209,7 @@ sätts automatiskt när du lägger till spel via adminpanelen.
 **Sortering:** En ny dropdown bredvid sökrutan låter dig och dina kompisar
 sortera biblioteket på Standard, Senast tillagd, Mest spelad, eller A–Ö.
 "Mest spelad" räknas via Workern (samma en som sköter topplistorna) — kräver
-alltså att Worker-URL är satt i `leaderboard.js`.
+alltså att Worker-URL är satt i `worker-config.js`.
 
 **Felsida vid trasigt spel:** Om ett spel inte laddar inom några sekunder
 (t.ex. om en fil glömdes bort vid uppladdning) visas ett vänligt
@@ -218,6 +218,29 @@ felmeddelande med en "Tillbaka"-knapp istället för en tom vit ruta.
 **Fullständig översättning:** Alla statusmeddelanden i adminpanelen
 (uppladdning, meddelanden, feedback, topplista-nollställning) växlar nu
 språk tillsammans med resten av portalen.
+
+## Engångskoder för spel-valutor
+
+Adminpanelen har en **🎟 Koder**-flik: välj spel (Neon Alley eller The
+Gilded Fox), valuta (poletter/tickets/marker), och ett belopp — klicka
+**Skapa kod** och du får en 8-teckens kod att dela med en kompis.
+
+Koden funkar **precis en gång**. Spelaren klickar **🎁 Lös in kod** /
+**🎁 Redeem code** i spelet, skriver in koden, och får valutan direkt in i
+sitt eget sparade spel på sin egen enhet.
+
+**Kräver:**
+- Att Worker-URL är satt (samma som topplistan använder)
+- Att din uppdaterade Worker-kod (`worker/cloudflare-worker.js`) är
+  klistrad in i Cloudflare igen — den har nya funktioner för att skapa
+  och lösa in koder
+- Admin-nyckeln (samma som Feedback-fliken använder) för att skapa koder
+
+**Teknisk notering:** `WORKER_URL` flyttades till en egen fil,
+`worker-config.js`, i repots rot — både portalen och de enskilda spelen
+läser Worker-adressen därifrån nu istället för att ha den på flera
+ställen. Om du någon gång byter Worker-URL i framtiden räcker det att
+ändra den på ett ställe.
 
 ## Lägg till ett eget spel manuellt
 

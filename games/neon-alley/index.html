@@ -354,6 +354,7 @@
       </div>
       <div class="daily">
         <button class="btn ghost" id="soundToggleBtn" onclick="toggleSound()" style="padding:9px 14px;">🔊</button>
+        <button class="btn ghost" id="redeemOpenBtn" onclick="openRedeem()">🎁 Lös in kod</button>
         <button class="btn amber" id="dailyBtn">+10 Dagens bonus</button>
       </div>
     </div>
@@ -516,6 +517,19 @@
 <button id="modToggleBtn" class="btn ghost mono" onclick="openMod()" style="position:fixed; bottom:16px; right:16px; z-index:60; opacity:0.6; font-size:11px; display:none;">⚙️ Mod</button>
 
 <!-- Code gate -->
+<div class="overlay" id="ov-redeem">
+  <div class="game-panel" style="max-width:320px;">
+    <div class="gp-head">
+      <h2 class="pixel" style="font-size:12px;">LÖS IN KOD</h2>
+      <button class="btn ghost" onclick="closeRedeem()">✕</button>
+    </div>
+    <p style="margin:0;font-size:12px;color:var(--text-dim);">Har du fått en engångskod? Ange den här.</p>
+    <input type="text" id="redeemCodeInput" class="mod-input" style="width:100%;text-transform:uppercase;" placeholder="KOD..." onkeypress="if(event.key==='Enter') submitRedeemCode()">
+    <div class="mono" id="redeemError" style="display:none;color:var(--neon-magenta);font-size:11px;"></div>
+    <button class="btn" id="redeemSubmitBtn" onclick="submitRedeemCode()">Lös in</button>
+  </div>
+</div>
+
 <div class="overlay" id="ov-modauth">
   <div class="game-panel" style="max-width:320px;">
     <div class="gp-head">
@@ -779,6 +793,61 @@ function openMod(){
   setTimeout(()=>document.getElementById("modCodeInput").focus(), 60);
 }
 function closeModAuth(){ document.getElementById("ov-modauth").classList.remove("active"); }
+
+/* ---------------------------------------------------------------------
+   REDEEM CODE — one-time currency codes created by the portal owner
+   in the admin panel. Talks to the same Worker as the leaderboard
+   (WORKER_URL comes from ../../worker-config.js).
+--------------------------------------------------------------------- */
+function openRedeem(){
+  document.getElementById("redeemCodeInput").value = "";
+  document.getElementById("redeemError").style.display = "none";
+  document.getElementById("ov-redeem").classList.add("active");
+  setTimeout(()=>document.getElementById("redeemCodeInput").focus(), 60);
+}
+function closeRedeem(){ document.getElementById("ov-redeem").classList.remove("active"); }
+
+async function submitRedeemCode(){
+  const errorEl = document.getElementById("redeemError");
+  const btn = document.getElementById("redeemSubmitBtn");
+  const code = document.getElementById("redeemCodeInput").value.trim().toUpperCase();
+  errorEl.style.display = "none";
+  if (!code) return;
+
+  if (typeof WORKER_URL === "undefined" || WORKER_URL.includes("REPLACE-ME")){
+    errorEl.textContent = "Koder är inte påslaget än på den här sidan.";
+    errorEl.style.display = "block";
+    return;
+  }
+
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${WORKER_URL}/codes/redeem`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, game: "neon-alley" })
+    });
+    const data = await res.json();
+    if (!res.ok){
+      errorEl.textContent = data.error === "already used" ? "Koden är redan använd."
+        : data.error === "wrong game" ? "Den koden är inte för det här spelet."
+        : "Ogiltig kod.";
+      errorEl.style.display = "block";
+      return;
+    }
+    if (data.currency === "tokens") state.tokens += data.amount;
+    else if (data.currency === "tickets") state.tickets += data.amount;
+    saveState();
+    refreshHud();
+    closeRedeem();
+    showToast(`+${data.amount} ${data.currency === "tokens" ? "poletter" : "tickets"} inlöst!`);
+  } catch (e){
+    errorEl.textContent = "Kunde inte nå servern just nu — testa igen om en stund.";
+    errorEl.style.display = "block";
+  } finally {
+    btn.disabled = false;
+  }
+}
 function submitModCode(){
   const val = document.getElementById("modCodeInput").value.trim();
   if(val === MOD_CODE){
@@ -1863,6 +1932,7 @@ function drawBasketScene(ballX, ballY, opts){
 ===================================================================== */
 refreshHud();
 </script>
+<script src="../../worker-config.js"></script>
 <script src="i18n-data.js"></script>
 <script src="../../i18n.js"></script>
 </body>

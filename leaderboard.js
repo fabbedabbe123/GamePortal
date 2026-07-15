@@ -1,13 +1,12 @@
 // ============================================================
 // SHELF — shared leaderboard
 // ------------------------------------------------------------
-// Talks to the Cloudflare Worker (see /worker/cloudflare-worker.js)
-// so everyone's best scores are visible to everyone, not just
-// stored locally. Until WORKER_URL is set, this quietly does
-// nothing — the portal works exactly the same either way.
+// Talks to the Cloudflare Worker (see /worker/cloudflare-worker.js) so
+// everyone's best scores are visible to everyone, not just stored
+// locally. WORKER_URL comes from worker-config.js (loaded before this
+// file). Until it's set, this quietly does nothing — the portal works
+// exactly the same either way.
 // ============================================================
-
-const WORKER_URL = "https://shelf.fabian-hallberg09.workers.dev"; // <-- set after deploying the Worker
 
 (function () {
   const NICK_KEY = "shelf.nickname";
