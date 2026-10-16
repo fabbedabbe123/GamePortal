@@ -172,43 +172,32 @@ const GAMES = [
     `
   },
   {
-    id: "mini-golf",
-    title: "Mini Golf",
-    folder: "mini-golf",
-    category: "Sport",
-    description: "Sex banor, fysikbaserad putting. Färre slag vinner — dra bollen bakåt och släpp för att slå.",
-    descriptionEn: "Six holes, physics-based putting. Fewest strokes wins — drag the ball back and release to putt.",
-    color: "#3ddc84",
+    id: "cryptic",
+    title: "Cryptic",
+    folder: "cryptic",
+    category: "Puzzle",
+    description: "Kryptiska korsordsledtrådar på en minut. Hitta definitionen, knäck ordleken — fem ledtrådar per rond.",
+    descriptionEn: "Bite-sized cryptic crossword clues. Spot the definition, crack the wordplay — five clues per round.",
+    color: "#b48cff",
     cart: "06",
-    addedAt: "2026-07-16",
-    scoreKey: "miniGolfBestStrokes",
-    scoreLabel: "Slag",
-    scoreLabelEn: "Strokes",
-    scoreBetter: "lower",
+    addedAt: "2026-10-16",
+    scoreKey: "crypticBest",
+    scoreLabel: "Poäng",
+    scoreLabelEn: "Points",
+    scoreBetter: "higher",
     thumb: `
       <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="mg-bg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#1f6b3a"/>
-            <stop offset="1" stop-color="#154a28"/>
-          </linearGradient>
-        </defs>
-        <rect width="320" height="200" fill="url(#mg-bg)"/>
-        <g opacity="0.08">
-          <rect x="0" y="0" width="22" height="200" fill="#ffffff"/>
-          <rect x="44" y="0" width="22" height="200" fill="#ffffff"/>
-          <rect x="88" y="0" width="22" height="200" fill="#ffffff"/>
-          <rect x="132" y="0" width="22" height="200" fill="#ffffff"/>
-          <rect x="176" y="0" width="22" height="200" fill="#ffffff"/>
-          <rect x="220" y="0" width="22" height="200" fill="#ffffff"/>
-          <rect x="264" y="0" width="22" height="200" fill="#ffffff"/>
+        <rect width="320" height="200" fill="#14121c"/>
+        <text x="160" y="72" font-family="Georgia, serif" font-size="17" fill="#eef0f6" text-anchor="middle">Silent <tspan fill="#e8b84b">revamp</tspan>: <tspan fill="#3ddc84" text-decoration="underline">pay attention</tspan></text>
+        <g font-family="monospace" font-weight="700" font-size="20" text-anchor="middle">
+          <rect x="73" y="104" width="26" height="32" rx="5" fill="none" stroke="#b48cff" stroke-width="2"/><text x="86" y="127" fill="#eef0f6">L</text>
+          <rect x="103" y="104" width="26" height="32" rx="5" fill="none" stroke="#b48cff" stroke-width="2"/><text x="116" y="127" fill="#eef0f6">I</text>
+          <rect x="133" y="104" width="26" height="32" rx="5" fill="none" stroke="#b48cff" stroke-width="2"/><text x="146" y="127" fill="#eef0f6">S</text>
+          <rect x="163" y="104" width="26" height="32" rx="5" fill="none" stroke="#b48cff" stroke-width="2"/><text x="176" y="127" fill="#eef0f6">T</text>
+          <rect x="193" y="104" width="26" height="32" rx="5" fill="none" stroke="#322d4a" stroke-width="2"/>
+          <rect x="223" y="104" width="26" height="32" rx="5" fill="none" stroke="#322d4a" stroke-width="2"/>
         </g>
-        <rect x="130" y="80" width="40" height="90" rx="20" fill="#6b4a2f" opacity="0.85"/>
-        <circle cx="245" cy="100" r="11" fill="#0b0b0b"/>
-        <line x1="245" y1="100" x2="245" y2="58" stroke="#d8d8d8" stroke-width="2"/>
-        <path d="M245 58 L268 66 L245 74 Z" fill="#e34b4b"/>
-        <circle cx="70" cy="130" r="8" fill="#f4f4f0"/>
-        <line x1="70" y1="130" x2="230" y2="104" stroke="#ffffff" stroke-width="2" stroke-dasharray="5,5" opacity="0.5"/>
+        <text x="160" y="168" font-family="monospace" font-size="11" fill="#8f89ad" text-anchor="middle" letter-spacing="2">CRYPTIC · 6</text>
       </svg>
     `
   },

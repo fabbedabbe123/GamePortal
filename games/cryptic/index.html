@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cryptic</title>
+<style>
+  :root{
+    --bg:#14121c; --card:#1d1a2b; --line:#322d4a; --text:#eef0f6; --muted:#8f89ad;
+    --accent:#b48cff; --good:#3ddc84; --bad:#ff6b6b; --gold:#e8b84b;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; background:var(--bg); color:var(--text);
+    font-family:"JetBrains Mono","SFMono-Regular",Consolas,monospace; }
+  body{ display:flex; align-items:center; justify-content:center; padding:12px; overflow:auto; }
+  .hidden{ display:none !important; }
+  #app{ width:100%; max-width:560px; display:flex; flex-direction:column; gap:14px; }
+  #hud{ display:flex; justify-content:space-between; gap:12px; }
+  #hud div{ text-align:center; flex:1; }
+  #hud .label{ display:block; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.5px; }
+  #hud b{ font-size:17px; color:var(--accent); }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; }
+  #clue{ font-size:20px; line-height:1.5; text-align:center; font-family:Georgia,"Times New Roman",serif; }
+  #clue .len{ color:var(--muted); font-size:16px; white-space:nowrap; }
+  #clue mark{ background:none; border-radius:3px; padding:0 2px; }
+  #clue mark.ind{ color:var(--gold); border-bottom:2px dotted var(--gold); }
+  #clue mark.def{ color:var(--good); border-bottom:2px solid var(--good); }
+  #type{ margin-top:10px; text-align:center; font-size:12px; color:var(--gold); min-height:16px; }
+  #boxes{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:6px 0; }
+  .box{ width:34px; height:42px; border:2px solid var(--line); border-radius:6px; display:flex; align-items:center;
+    justify-content:center; font-size:20px; font-weight:700; text-transform:uppercase; background:#17142200; }
+  .box.cur{ border-color:var(--accent); }
+  .box.hint{ color:var(--gold); border-color:var(--gold); }
+  .box.sp{ border:none; width:14px; }
+  #boxes.shake{ animation:shake .3s ease; }
+  @keyframes shake{ 10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(4px);}
+    30%,50%,70%{transform:translateX(-6px);} 40%,60%{transform:translateX(6px);} }
+  #inp{ position:absolute; opacity:0; pointer-events:none; }
+  #msg{ text-align:center; min-height:20px; font-size:13px; }
+  #msg.good{ color:var(--good); } #msg.bad{ color:var(--bad); } #msg.info{ color:var(--muted); }
+  .row{ display:flex; gap:8px; }
+  button{ font-family:inherit; font-size:13px; font-weight:700; border:none; border-radius:8px; padding:12px 10px;
+    cursor:pointer; flex:1; color:#fff; background:#3a3552; }
+  button:hover{ filter:brightness(1.15); }
+  button:disabled{ opacity:.4; cursor:default; filter:none; }
+  button.primary{ background:var(--accent); color:#14121c; }
+  button.warn{ background:#4a2f3a; }
+  #explain{ font-size:13px; line-height:1.6; color:var(--muted); text-align:center; }
+  #explain b{ color:var(--text); }
+  #end{ text-align:center; display:flex; flex-direction:column; gap:12px; }
+  #end h2{ margin:0; font-size:20px; } #end .big{ font-size:44px; color:var(--accent); font-weight:700; }
+  #howto{ font-size:12px; color:var(--muted); text-align:center; line-height:1.6; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <div><span class="label" id="lblRound"></span><b id="round">1/5</b></div>
+    <div><span class="label" id="lblScore"></span><b id="score">0</b></div>
+    <div><span class="label" id="lblBest"></span><b id="best">0</b></div>
+  </div>
+
+  <div id="play" class="card">
+    <div id="clue"></div>
+    <div id="type"></div>
+    <div id="boxes"></div>
+    <input id="inp" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="30">
+    <div id="msg" class="info"></div>
+    <div id="explain" class="hidden"></div>
+    <div class="row" id="rowPlay" style="margin-top:10px">
+      <button id="btnHint"></button>
+      <button id="btnReveal" class="warn"></button>
+      <button id="btnCheck" class="primary"></button>
+    </div>
+    <div class="row hidden" id="rowNext" style="margin-top:10px">
+      <button id="btnNext" class="primary"></button>
+    </div>
+  </div>
+
+  <div id="end" class="card hidden">
+    <h2 id="endTitle"></h2>
+    <div class="big" id="endScore"></div>
+    <div id="endSub" style="color:var(--muted);font-size:13px"></div>
+    <button id="btnAgain" class="primary"></button>
+  </div>
+
+  <div id="howto"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const lang = (new URLSearchParams(location.search).get("lang") === "en") ? "en" : "sv";
+  document.documentElement.lang = lang;
+  const BEST_KEY = "crypticBest";
+  const ROUND_LEN = 5;
+
+  const T = {
+    sv: {
+      round:"Rond", score:"Poäng", best:"Rekord", hint:"Ledtråd", reveal:"Visa svar", check:"Svara", next:"Nästa", last:"Se resultat",
+      howto:"Varje ledtråd har två delar: en definition och ett ordspel. Hitta svaret! Ledtrådar kostar poäng, felgissningar också.",
+      typeLabel:"Typ", defLabel:"Definition", first:"Första bokstaven är", enterMore:"Fyll i hela ordet först.",
+      correct:"Rätt!", wrong:"Fel – försök igen.", revealed:"Svaret var", pts:"poäng",
+      endTitle:"Rond klar!", newBest:"Nytt rekord!", endSub:"Du löste", of:"av", again:"Spela igen", clues:"ledtrådar",
+      types:{anagram:"Anagram – blanda bokstäverna i ordet", hidden:"Gömt ord – svaret finns inuti texten", reversal:"Bakvänt – svaret är ett ord läst baklänges",
+        charade:"Sammansatt – svaret byggs av mindre delar", double:"Dubbel definition – två betydelser av samma ord", initials:"Begynnelsebokstäver – ta första bokstäverna",
+        container:"Behållare – en del placeras inuti en annan", homophone:"Homofon – låter som ett annat ord"},
+      parse:{anagram:(f,i,a)=>`<b>${f}</b> blandas (${i}) → <b>${a}</b>`, hidden:(f,i,a)=>`Gömt i <b>${f}</b> (${i}) → <b>${a}</b>`,
+        reversal:(f,i,a)=>`<b>${f}</b> baklänges (${i}) → <b>${a}</b>`, charade:(f,i,a)=>`${f} → <b>${a}</b>`, double:(f,i,a)=>`${f} → <b>${a}</b>`,
+        initials:(f,i,a)=>`Första bokstäverna i <b>${f}</b> (${i}) → <b>${a}</b>`, container:(f,i,a)=>`${f} → <b>${a}</b>`, homophone:(f,i,a)=>`${f} → <b>${a}</b>`}
+    },
+    en: {
+      round:"Round", score:"Points", best:"Best", hint:"Hint", reveal:"Reveal", check:"Guess", next:"Next", last:"See result",
+      howto:"Every clue has two parts: a definition and some wordplay. Find the answer! Hints cost points, and so do wrong guesses.",
+      typeLabel:"Type", defLabel:"Definition", first:"The first letter is", enterMore:"Fill in the whole word first.",
+      correct:"Correct!", wrong:"Not quite – try again.", revealed:"The answer was", pts:"points",
+      endTitle:"Round complete!", newBest:"New best!", endSub:"You solved", of:"of", again:"Play again", clues:"clues",
+      types:{anagram:"Anagram – rearrange the letters", hidden:"Hidden word – the answer is inside the clue text", reversal:"Reversal – a word read backwards",
+        charade:"Charade – the answer is built from smaller parts", double:"Double definition – two meanings of the same word", initials:"Initial letters – take the first letters",
+        container:"Container – one part sits inside another", homophone:"Homophone – sounds like another word"},
+      parse:{anagram:(f,i,a)=>`<b>${f}</b> rearranged (${i}) → <b>${a}</b>`, hidden:(f,i,a)=>`Hidden in <b>${f}</b> (${i}) → <b>${a}</b>`,
+        reversal:(f,i,a)=>`<b>${f}</b> reversed (${i}) → <b>${a}</b>`, charade:(f,i,a)=>`${f} → <b>${a}</b>`, double:(f,i,a)=>`${f} → <b>${a}</b>`,
+        initials:(f,i,a)=>`First letters of <b>${f}</b> (${i}) → <b>${a}</b>`, container:(f,i,a)=>`${f} → <b>${a}</b>`, homophone:(f,i,a)=>`${f} → <b>${a}</b>`}
+    }
+  }[lang];
+
+  // a: answer, c: clue text, d: definition (exact substring of clue), i: indicator (substring, optional),
+  // t: type, f: fodder / explanation, parts: for charade check
+  const PUZZLES = {
+    en: [
+      {a:"LISTEN", c:"Pay attention to silent revamp", d:"Pay attention to", i:"revamp", t:"anagram", f:"SILENT"},
+      {a:"HEART", c:"Earth in disarray is the core", d:"the core", i:"in disarray", t:"anagram", f:"EARTH"},
+      {a:"DORMITORY", c:"Dirty room reformed as sleeping quarters", d:"sleeping quarters", i:"reformed", t:"anagram", f:"DIRTY ROOM"},
+      {a:"ASTRONOMER", c:"Moon starer, oddly, is a stargazer", d:"a stargazer", i:"oddly", t:"anagram", f:"MOON STARER"},
+      {a:"CONVERSATION", c:"Voices rant on, wildly, in chat", d:"chat", i:"wildly", t:"anagram", f:"VOICES RANT ON"},
+      {a:"PEAR", c:"Fruit partly in cheap earring", d:"Fruit", i:"partly in", t:"hidden", f:"CHEAP EARRING"},
+      {a:"STAR", c:"Celebrity found in mustard", d:"Celebrity", i:"found in", t:"hidden", f:"MUSTARD"},
+      {a:"STOP", c:"Halt returned pots", d:"Halt", i:"returned", t:"reversal", f:"POTS"},
+      {a:"DEVIL", c:"Fiend lived, going back", d:"Fiend", i:"going back", t:"reversal", f:"LIVED"},
+      {a:"CARPET", c:"Floor covering vehicle and animal companion", d:"Floor covering", t:"charade", f:"vehicle (CAR) + animal companion (PET)"},
+      {a:"BARGAIN", c:"Good deal: pub, then profit", d:"Good deal", t:"charade", f:"pub (BAR) + profit (GAIN)"},
+      {a:"PANTHER", c:"Big cat gasp, then that woman", d:"Big cat", t:"charade", f:"gasp (PANT) + that woman (HER)"},
+      {a:"BEARD", c:"Carry day, producing chin growth", d:"chin growth", t:"charade", f:"carry (BEAR) + day (D)"},
+      {a:"PAINT", c:"Cover with colour drink holding a", d:"Cover with colour", i:"holding", t:"container", f:"drink (PINT) holding A: P(A)INT"},
+      {a:"CART", c:"Vehicle initially cats are really tame", d:"Vehicle", i:"initially", t:"initials", f:"Cats Are Really Tame"},
+      {a:"ROWS", c:"Flower, we hear, lines", d:"lines", i:"we hear", t:"homophone", f:"flower (ROSE) sounds like ROWS"},
+      {a:"KNIGHT", c:"Dark time, we hear, is a Sir", d:"a Sir", i:"we hear", t:"homophone", f:"dark time (NIGHT) sounds like KNIGHT"},
+      {a:"BANK", c:"Side of river and money store", d:"Side of river", t:"double", f:"river side / money store"},
+      {a:"PALM", c:"Hand part or tree", d:"Hand part", t:"double", f:"part of the hand / tree"},
+      {a:"LEFT", c:"Departed or not right", d:"Departed", t:"double", f:"departed / not right"}
+    ],
+    sv: [
+      {a:"LAST", c:"Salt rörigt ger börda", d:"börda", i:"rörigt", t:"anagram", f:"SALT"},
+      {a:"ROST", c:"Sort rörigt ger järnets fiende", d:"järnets fiende", i:"rörigt", t:"anagram", f:"SORT"},
+      {a:"ORKAN", c:"Krona rörigt blir våldsam storm", d:"våldsam storm", i:"rörigt", t:"anagram", f:"KRONA"},
+      {a:"DANS", c:"Sand omkastad blir svängom", d:"svängom", i:"omkastad", t:"anagram", f:"SAND"},
+      {a:"SPEL", c:"Pels rörigt blir tidsfördriv", d:"tidsfördriv", i:"rörigt", t:"anagram", f:"PELS"},
+      {a:"SÅG", c:"Gås bakvänd är verktyg", d:"verktyg", i:"bakvänd", t:"reversal", f:"GÅS"},
+      {a:"LOK", c:"Kol bakvänt drar tåget", d:"drar tåget", i:"bakvänt", t:"reversal", f:"KOL"},
+      {a:"TUR", c:"Lycka: rut åt andra hållet", d:"Lycka", i:"åt andra hållet", t:"reversal", f:"RUT"},
+      {a:"ÖRN", c:"Rovfågel delvis i hörnet", d:"Rovfågel", i:"delvis i", t:"hidden", f:"HÖRNET"},
+      {a:"ROS", c:"Blomma gömd i prosa", d:"Blomma", i:"gömd i", t:"hidden", f:"PROSA"},
+      {a:"LAND", c:"Territorium synligt i blanda", d:"Territorium", i:"synligt i", t:"hidden", f:"BLANDA"},
+      {a:"SOLROS", c:"Himlakropp plus blomma ger hög gul växt", d:"hög gul växt", t:"charade", f:"himlakropp (SOL) + blomma (ROS)"},
+      {a:"SJÖMAN", c:"Sjöfarare: insjö plus karl", d:"Sjöfarare", t:"charade", f:"insjö (SJÖ) + karl (MAN)"},
+      {a:"BILD", c:"Fordon och dag ger tavla", d:"tavla", t:"charade", f:"fordon (BIL) + dag (D)"},
+      {a:"SKOLA", c:"Lärosäte: fotbeklädnad plus ton", d:"Lärosäte", t:"charade", f:"fotbeklädnad (SKO) + ton (LA)"},
+      {a:"HANDLA", c:"Köpa: kroppsdel plus ton", d:"Köpa", t:"charade", f:"kroppsdel (HAND) + ton (LA)"},
+      {a:"KRAN", c:"Vattenkälla i badrummet eller lyftanordning", d:"Vattenkälla i badrummet", t:"double", f:"vattenkälla / lyftanordning"},
+      {a:"BLAD", c:"Löv eller tidning", d:"Löv", t:"double", f:"löv / tidning"},
+      {a:"RING", c:"Smycke eller telefonsamtal", d:"Smycke", t:"double", f:"smycke / telefonsamtal"},
+      {a:"MÅL", c:"Syfte eller måltid", d:"Syfte", t:"double", f:"syfte / måltid"}
+    ]
+  }[lang];
+
+  const $ = id => document.getElementById(id);
+  const norm = s => s.toLocaleUpperCase(lang==="sv"?"sv-SE":"en-US").replace(/[^A-ZÅÄÖ]/g,"");
+
+  let queue, idx, total, solved, hints, wrong, typed, done, best;
+  try{ best = parseInt(localStorage.getItem(BEST_KEY)||"0",10) || 0; }catch(e){ best = 0; }
+
+  function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+  function setStatic(){
+    $("lblRound").textContent=T.round; $("lblScore").textContent=T.score; $("lblBest").textContent=T.best;
+    $("btnHint").textContent=T.hint; $("btnReveal").textContent=T.reveal; $("btnCheck").textContent=T.check;
+    $("btnAgain").textContent=T.again; $("howto").textContent=T.howto;
+  }
+
+  function newRound(){
+    queue = shuffle(PUZZLES).slice(0,ROUND_LEN); idx=0; total=0; solved=0;
+    $("end").classList.add("hidden"); $("play").classList.remove("hidden");
+    loadClue();
+  }
+
+  function esc(s){ return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+  function renderClue(){
+    const p=queue[idx];
+    let html=esc(p.c);
+    const wrap=(sub,cls)=>{ if(!sub) return; const e=esc(sub); const k=html.indexOf(e); if(k<0) return;
+      html=html.slice(0,k)+`<mark class="${cls}">${e}</mark>`+html.slice(k+e.length); };
+    // apply later-in-string first isn't needed since marks are disjoint substrings
+    if(hints>=2 || done) wrap(p.d,"def");
+    if((hints>=1 || done) && p.i) wrap(p.i,"ind");
+    html += ` <span class="len">(${p.a.length})</span>`;
+    $("clue").innerHTML=html;
+    $("type").textContent = (hints>=1||done) ? T.typeLabel+": "+T.types[p.t] : "";
+  }
+
+  function renderBoxes(){
+    const p=queue[idx], n=p.a.length, box=$("boxes"); box.innerHTML="";
+    for(let k=0;k<n;k++){
+      const d=document.createElement("div"); d.className="box";
+      let ch = typed[k]||"";
+      if(done) ch=p.a[k];
+      else if(!ch && hints>=3 && k===0) { ch=p.a[0]; d.classList.add("hint"); }
+      if(!done && k===typed.length) d.classList.add("cur");
+      d.textContent=ch; box.appendChild(d);
+    }
+  }
+
+  function loadClue(){
+    hints=0; wrong=0; typed=""; done=false;
+    $("round").textContent=(idx+1)+"/"+ROUND_LEN; $("score").textContent=total; $("best").textContent=best;
+    $("explain").classList.add("hidden"); $("rowNext").classList.add("hidden"); $("rowPlay").classList.remove("hidden");
+    setMsg("",""); $("btnHint").disabled=false; renderClue(); renderBoxes(); focusInp();
+  }
+
+  function setMsg(t,c){ const m=$("msg"); m.textContent=t; m.className=c||"info"; }
+  function focusInp(){ try{ $("inp").focus({preventScroll:true}); }catch(e){} }
+
+  function hint(){
+    if(done || hints>=3) return;
+    hints++;
+    if(hints===3){
+      setMsg(T.first+" "+queue[idx].a[0],"info"); $("btnHint").disabled=true;
+    }
+    renderClue(); renderBoxes(); focusInp();
+  }
+
+  function finish(gotPoints, ok){
+    done=true; total+=gotPoints; if(ok) solved++;
+    $("score").textContent=total;
+    renderClue(); renderBoxes();
+    const p=queue[idx];
+    $("explain").innerHTML = (T.parse[p.t]||T.parse.charade)(p.f, p.i||"", p.a);
+    $("explain").classList.remove("hidden");
+    $("rowPlay").classList.add("hidden"); $("rowNext").classList.remove("hidden");
+    $("btnNext").textContent = idx===ROUND_LEN-1 ? T.last : T.next;
+    if(ok) setMsg(T.correct+" +"+gotPoints+" "+T.pts,"good");
+    else setMsg(T.revealed+" "+p.a,"bad");
+  }
+
+  function check(){
+    if(done) return;
+    const p=queue[idx];
+    if(typed.length<p.a.length){ setMsg(T.enterMore,"info"); return; }
+    if(norm(typed)===norm(p.a)){
+      finish(Math.max(10, 100 - 20*hints - 5*wrong), true);
+    } else {
+      wrong++; setMsg(T.wrong,"bad");
+      const b=$("boxes"); b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");
+      typed=""; renderBoxes();
+    }
+  }
+
+  function next(){
+    if(idx<ROUND_LEN-1){ idx++; loadClue(); return; }
+    const isNew = total>best;
+    if(isNew){ best=total; try{ localStorage.setItem(BEST_KEY,String(best)); }catch(e){} }
+    $("best").textContent=best;
+    $("play").classList.add("hidden"); $("end").classList.remove("hidden");
+    $("endTitle").textContent = isNew ? T.newBest : T.endTitle;
+    $("endScore").textContent = total;
+    $("endSub").textContent = T.endSub+" "+solved+" "+T.of+" "+ROUND_LEN+" "+T.clues;
+  }
+
+  function typeChar(ch){
+    if(done) return;
+    const n=queue[idx].a.length;
+    if(typed.length<n){ typed+=ch; renderBoxes(); }
+  }
+
+  document.addEventListener("keydown",e=>{
+    if(e.ctrlKey||e.metaKey||e.altKey) return;
+    if(e.key==="Enter"){ e.preventDefault(); done ? (!$("rowNext").classList.contains("hidden") && next()) : check(); return; }
+    if(done) return;
+    if(e.key==="Backspace"){ e.preventDefault(); typed=typed.slice(0,-1); renderBoxes(); return; }
+    if(e.key.length===1){
+      const ch=e.key.toLocaleUpperCase(lang==="sv"?"sv-SE":"en-US");
+      if(/^[A-ZÅÄÖ]$/.test(ch)){ e.preventDefault(); typeChar(ch); }
+    }
+  });
+  // Mobile: hidden input fallback for soft keyboards
+  $("inp").addEventListener("input",()=>{
+    const v=$("inp").value; $("inp").value="";
+    for(const c of v){ const ch=c.toLocaleUpperCase(lang==="sv"?"sv-SE":"en-US"); if(/^[A-ZÅÄÖ]$/.test(ch)) typeChar(ch); }
+  });
+  $("boxes").addEventListener("click",focusInp);
+  $("btnHint").addEventListener("click",hint);
+  $("btnCheck").addEventListener("click",check);
+  $("btnReveal").addEventListener("click",()=>{ if(!done) finish(0,false); });
+  $("btnNext").addEventListener("click",next);
+  $("btnAgain").addEventListener("click",newRound);
+
+  setStatic(); newRound();
+})();
+</script>
+</body>
+</html>
