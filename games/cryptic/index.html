@@ -87,6 +87,7 @@
   <div id="howto"></div>
 </div>
 
+<script src="clues.js"></script>
 <script>
 (function(){
   "use strict";
@@ -124,54 +125,7 @@
     }
   }[lang];
 
-  // a: answer, c: clue text, d: definition (exact substring of clue), i: indicator (substring, optional),
-  // t: type, f: fodder / explanation, parts: for charade check
-  const PUZZLES = {
-    en: [
-      {a:"LISTEN", c:"Pay attention to silent revamp", d:"Pay attention to", i:"revamp", t:"anagram", f:"SILENT"},
-      {a:"HEART", c:"Earth in disarray is the core", d:"the core", i:"in disarray", t:"anagram", f:"EARTH"},
-      {a:"DORMITORY", c:"Dirty room reformed as sleeping quarters", d:"sleeping quarters", i:"reformed", t:"anagram", f:"DIRTY ROOM"},
-      {a:"ASTRONOMER", c:"Moon starer, oddly, is a stargazer", d:"a stargazer", i:"oddly", t:"anagram", f:"MOON STARER"},
-      {a:"CONVERSATION", c:"Voices rant on, wildly, in chat", d:"chat", i:"wildly", t:"anagram", f:"VOICES RANT ON"},
-      {a:"PEAR", c:"Fruit partly in cheap earring", d:"Fruit", i:"partly in", t:"hidden", f:"CHEAP EARRING"},
-      {a:"STAR", c:"Celebrity found in mustard", d:"Celebrity", i:"found in", t:"hidden", f:"MUSTARD"},
-      {a:"STOP", c:"Halt returned pots", d:"Halt", i:"returned", t:"reversal", f:"POTS"},
-      {a:"DEVIL", c:"Fiend lived, going back", d:"Fiend", i:"going back", t:"reversal", f:"LIVED"},
-      {a:"CARPET", c:"Floor covering vehicle and animal companion", d:"Floor covering", t:"charade", f:"vehicle (CAR) + animal companion (PET)"},
-      {a:"BARGAIN", c:"Good deal: pub, then profit", d:"Good deal", t:"charade", f:"pub (BAR) + profit (GAIN)"},
-      {a:"PANTHER", c:"Big cat gasp, then that woman", d:"Big cat", t:"charade", f:"gasp (PANT) + that woman (HER)"},
-      {a:"BEARD", c:"Carry day, producing chin growth", d:"chin growth", t:"charade", f:"carry (BEAR) + day (D)"},
-      {a:"PAINT", c:"Cover with colour drink holding a", d:"Cover with colour", i:"holding", t:"container", f:"drink (PINT) holding A: P(A)INT"},
-      {a:"CART", c:"Vehicle initially cats are really tame", d:"Vehicle", i:"initially", t:"initials", f:"Cats Are Really Tame"},
-      {a:"ROWS", c:"Flower, we hear, lines", d:"lines", i:"we hear", t:"homophone", f:"flower (ROSE) sounds like ROWS"},
-      {a:"KNIGHT", c:"Dark time, we hear, is a Sir", d:"a Sir", i:"we hear", t:"homophone", f:"dark time (NIGHT) sounds like KNIGHT"},
-      {a:"BANK", c:"Side of river and money store", d:"Side of river", t:"double", f:"river side / money store"},
-      {a:"PALM", c:"Hand part or tree", d:"Hand part", t:"double", f:"part of the hand / tree"},
-      {a:"LEFT", c:"Departed or not right", d:"Departed", t:"double", f:"departed / not right"}
-    ],
-    sv: [
-      {a:"LAST", c:"Salt rörigt ger börda", d:"börda", i:"rörigt", t:"anagram", f:"SALT"},
-      {a:"ROST", c:"Sort rörigt ger järnets fiende", d:"järnets fiende", i:"rörigt", t:"anagram", f:"SORT"},
-      {a:"ORKAN", c:"Krona rörigt blir våldsam storm", d:"våldsam storm", i:"rörigt", t:"anagram", f:"KRONA"},
-      {a:"DANS", c:"Sand omkastad blir svängom", d:"svängom", i:"omkastad", t:"anagram", f:"SAND"},
-      {a:"SPEL", c:"Pels rörigt blir tidsfördriv", d:"tidsfördriv", i:"rörigt", t:"anagram", f:"PELS"},
-      {a:"SÅG", c:"Gås bakvänd är verktyg", d:"verktyg", i:"bakvänd", t:"reversal", f:"GÅS"},
-      {a:"LOK", c:"Kol bakvänt drar tåget", d:"drar tåget", i:"bakvänt", t:"reversal", f:"KOL"},
-      {a:"TUR", c:"Lycka: rut åt andra hållet", d:"Lycka", i:"åt andra hållet", t:"reversal", f:"RUT"},
-      {a:"ÖRN", c:"Rovfågel delvis i hörnet", d:"Rovfågel", i:"delvis i", t:"hidden", f:"HÖRNET"},
-      {a:"ROS", c:"Blomma gömd i prosa", d:"Blomma", i:"gömd i", t:"hidden", f:"PROSA"},
-      {a:"LAND", c:"Territorium synligt i blanda", d:"Territorium", i:"synligt i", t:"hidden", f:"BLANDA"},
-      {a:"SOLROS", c:"Himlakropp plus blomma ger hög gul växt", d:"hög gul växt", t:"charade", f:"himlakropp (SOL) + blomma (ROS)"},
-      {a:"SJÖMAN", c:"Sjöfarare: insjö plus karl", d:"Sjöfarare", t:"charade", f:"insjö (SJÖ) + karl (MAN)"},
-      {a:"BILD", c:"Fordon och dag ger tavla", d:"tavla", t:"charade", f:"fordon (BIL) + dag (D)"},
-      {a:"SKOLA", c:"Lärosäte: fotbeklädnad plus ton", d:"Lärosäte", t:"charade", f:"fotbeklädnad (SKO) + ton (LA)"},
-      {a:"HANDLA", c:"Köpa: kroppsdel plus ton", d:"Köpa", t:"charade", f:"kroppsdel (HAND) + ton (LA)"},
-      {a:"KRAN", c:"Vattenkälla i badrummet eller lyftanordning", d:"Vattenkälla i badrummet", t:"double", f:"vattenkälla / lyftanordning"},
-      {a:"BLAD", c:"Löv eller tidning", d:"Löv", t:"double", f:"löv / tidning"},
-      {a:"RING", c:"Smycke eller telefonsamtal", d:"Smycke", t:"double", f:"smycke / telefonsamtal"},
-      {a:"MÅL", c:"Syfte eller måltid", d:"Syfte", t:"double", f:"syfte / måltid"}
-    ]
-  }[lang];
+  const PUZZLES = (typeof CRYPTIC_CLUES !== "undefined" && CRYPTIC_CLUES[lang]) || [];
 
   const $ = id => document.getElementById(id);
   const norm = s => s.toLocaleUpperCase(lang==="sv"?"sv-SE":"en-US").replace(/[^A-ZÅÄÖ]/g,"");
@@ -181,6 +135,20 @@
 
   function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
+  // Avoid repeats: remember which clues this player has already seen,
+  // and only reuse them once the whole bank has been played through.
+  const SEEN_KEY = "crypticSeen." + lang;
+  function loadSeen(){ try{ return new Set(JSON.parse(localStorage.getItem(SEEN_KEY)||"[]")); }catch(e){ return new Set(); } }
+  function saveSeen(set){ try{ localStorage.setItem(SEEN_KEY, JSON.stringify([...set])); }catch(e){} }
+  function pickRound(){
+    let seen = loadSeen();
+    let fresh = PUZZLES.filter(p => !seen.has(p.a));
+    if(fresh.length < ROUND_LEN){ seen = new Set(); fresh = PUZZLES.slice(); }
+    const round = shuffle(fresh).slice(0, ROUND_LEN);
+    round.forEach(p => seen.add(p.a)); saveSeen(seen);
+    return round;
+  }
+
   function setStatic(){
     $("lblRound").textContent=T.round; $("lblScore").textContent=T.score; $("lblBest").textContent=T.best;
     $("btnHint").textContent=T.hint; $("btnReveal").textContent=T.reveal; $("btnCheck").textContent=T.check;
@@ -188,7 +156,7 @@
   }
 
   function newRound(){
-    queue = shuffle(PUZZLES).slice(0,ROUND_LEN); idx=0; total=0; solved=0;
+    queue = pickRound(); idx=0; total=0; solved=0;
     $("end").classList.add("hidden"); $("play").classList.remove("hidden");
     loadClue();
   }
